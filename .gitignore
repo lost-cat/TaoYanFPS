@@ -47,6 +47,7 @@
 SourceArt/**/*.png
 SourceArt/**/*.tga
 
+Android_ETC2/*
 # Binary Files
 Binaries/*
 Plugins/*/Binaries/*
