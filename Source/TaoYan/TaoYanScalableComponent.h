@@ -48,5 +48,6 @@ public:
 	TObjectPtr<UPrimitiveComponent> PrimitiveComponent;
 
 private:
+	// UPROPERTY(Replicated)
 	bool bIsScaled = false;
 };

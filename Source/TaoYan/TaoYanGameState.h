@@ -19,5 +19,6 @@ public:
 	void SetRemainTime(const float InTime) { RemainTime = InTime; }
 	float GetRemainTime() const { return RemainTime; }
 private:
+	UPROPERTY()
 	float RemainTime;
 };

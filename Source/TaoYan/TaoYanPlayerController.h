@@ -7,7 +7,7 @@
 #include "TaoYanPlayerController.generated.h"
 
 class UInputMappingContext;
-
+DECLARE_EVENT_OneParam(ATaoYanPlayerController,FOnScoreUpdate,float);
 /**
  *
  */
@@ -29,7 +29,9 @@ protected:
 
 
 	// End Actor interface
-
+public:
+	// UPROPERTY(BlueprintAssignable, Category = "Score")
+	FOnScoreUpdate OnScoreUpdate;
 public:
 	void GainScore(float Score) const;
 	float GetScore() const;

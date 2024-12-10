@@ -23,7 +23,10 @@ void ATaoYanPlayerController::GainScore(const float Score) const
 {
 	auto State = GetPlayerState<APlayerState>();
 	State->SetScore(State->GetScore() + Score);
+	OnScoreUpdate.Broadcast(State->GetScore());
+	
 }
+
 
 float ATaoYanPlayerController::GetScore() const
 {

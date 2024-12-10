@@ -48,7 +48,8 @@ public:
 	/** Make the weapon Fire a Projectile */
 	UFUNCTION(BlueprintCallable, Category="Weapon")
 	void Fire();
-
+	UFUNCTION(Server, Reliable)
+	void HandleFire();
 protected:
 	/** Ends gameplay for this component. */
 	UFUNCTION()
@@ -58,3 +59,7 @@ private:
 	/** The Character holding this weapon*/
 	ATaoYanCharacter* Character;
 };
+
+
+
+

@@ -37,7 +37,7 @@ ATaoYanGameMode::ATaoYanGameMode()
 	DefaultPawnClass = PlayerPawnClassFinder.Class;
 	static ConstructorHelpers::FClassFinder<AStaticMeshActor> ScoreCubeClassFinder(
 		TEXT(
-			"/Script/Engine.Blueprint'/Game/FirstPerson/Blueprints/SM_ScalableChamferCube_BP.SM_ScalableChamferCube_BP'"));
+			"/Script/Engine.Blueprint'/Game/FirstPerson/Blueprints/SM_ScalableChamferCube.SM_ScalableChamferCube_C'"));
 	ScoreCubeClass = ScoreCubeClassFinder.Class;
 }
 
@@ -64,6 +64,8 @@ void ATaoYanGameMode::UpdateTime()
 	GetGameState<ATaoYanGameState>()->SetRemainTime(
 		GetGameState<ATaoYanGameState>()->GetRemainTime() -
 		GetWorld()->GetTimerManager().GetTimerRate(TimerHandle));
+
+	OnRemainTimeUpdate.Broadcast(GetGameState<ATaoYanGameState>()->GetRemainTime());
 	if (GetGameState<ATaoYanGameState>()->GetRemainTime() <= 0.0f)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
@@ -83,10 +85,24 @@ void ATaoYanGameMode::UpdateTime()
 void ATaoYanGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+	
 	StartScoreTime();
+	RandomMarkSpecialScoreCube(5);
+	if (ScoreCubeClass == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ScoreCubeClass is not set!"));
+	}
 }
 
 
+/**
+ * Marks a specified number of score cubes as special.
+ *
+ * This function finds all actors of the ScoreCubeClass and randomly selects a specified number of them
+ * to mark as special by setting their ScalableComponent's special property to true.
+ *
+ * @param Special The number of score cubes to mark as special.
+ */
 void ATaoYanGameMode::RandomMarkSpecialScoreCube(int Special)
 {
 	TArray<AActor*> FoundActors;

@@ -21,13 +21,34 @@ UTP_WeaponComponent::UTP_WeaponComponent()
 }
 
 
+
 void UTP_WeaponComponent::Fire()
 {
 	if (Character == nullptr || Character->GetController() == nullptr)
 	{
 		return;
 	}
-
+	//
+	HandleFire();
+	// Try and play the sound if specified
+	if (FireSound != nullptr)
+	{
+		// UGameplayStatics::PlaySoundAtLocation(this, FireSound, Character->GetActorLocation());
+	}
+	
+	// Try and play a firing animation if specified
+	if (FireAnimation != nullptr)
+	{
+		// Get the animation object for the arms mesh
+		UAnimInstance* AnimInstance = Character->GetMesh1P()->GetAnimInstance();
+		if (AnimInstance != nullptr)
+		{
+			AnimInstance->Montage_Play(FireAnimation, 1.f);
+		}
+	}
+}
+void UTP_WeaponComponent::HandleFire_Implementation()
+{
 	// Try and fire a projectile
 	if (ProjectileClass != nullptr)
 	{
@@ -46,27 +67,10 @@ void UTP_WeaponComponent::Fire()
 			// Spawn the projectile at the muzzle
 			auto Projectile = World->SpawnActor<ATaoYanProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
 			Projectile->SetCharacter(Character);
-		}
-	}
-	
-	// Try and play the sound if specified
-	if (FireSound != nullptr)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, FireSound, Character->GetActorLocation());
-	}
-	
-	// Try and play a firing animation if specified
-	if (FireAnimation != nullptr)
-	{
-		// Get the animation object for the arms mesh
-		UAnimInstance* AnimInstance = Character->GetMesh1P()->GetAnimInstance();
-		if (AnimInstance != nullptr)
-		{
-			AnimInstance->Montage_Play(FireAnimation, 1.f);
+			
 		}
 	}
 }
-
 bool UTP_WeaponComponent::AttachWeapon(ATaoYanCharacter* TargetCharacter)
 {
 	Character = TargetCharacter;
@@ -102,6 +106,8 @@ bool UTP_WeaponComponent::AttachWeapon(ATaoYanCharacter* TargetCharacter)
 
 	return true;
 }
+
+
 
 void UTP_WeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
