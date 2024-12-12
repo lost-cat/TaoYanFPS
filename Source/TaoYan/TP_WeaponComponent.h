@@ -7,7 +7,10 @@
 #include "TP_WeaponComponent.generated.h"
 
 class ATaoYanCharacter;
+class UTP_WeaponComponent;
 
+
+DECLARE_EVENT_OneParam(UTP_WeaponComponent,FOnRecoilChanged,float);
 UCLASS(Blueprintable, BlueprintType, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class TAOYAN_API UTP_WeaponComponent : public USkeletalMeshComponent
 {
@@ -50,16 +53,26 @@ public:
 	void Fire();
 	UFUNCTION(Server, Reliable)
 	void HandleFire();
+	//  current recoil of the weapon  will up when firing and descend when not firing 
+	UPROPERTY()
+	float Recoil = 0;
+
+	FOnRecoilChanged OnRecoilChanged;
 protected:
 	/** Ends gameplay for this component. */
 	UFUNCTION()
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	
+
 private:
 	/** The Character holding this weapon*/
 	ATaoYanCharacter* Character;
+	
+	
+	
 };
-
-
 
 
