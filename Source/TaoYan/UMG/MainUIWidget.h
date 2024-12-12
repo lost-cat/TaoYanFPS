@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "MainUIWidget.generated.h"
 
+class UScaleBox;
 class UTP_WeaponComponent;
 class UImage;
 class UTextBlock;
@@ -24,18 +25,26 @@ public:
 
 	UPROPERTY(BlueprintReadOnly,meta=(BindWidget))
 	UImage* FrontSightImage;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UScaleBox* BulletScaleBox;
 	
-
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UTextBlock* RemainBulletCountLabel;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UTextBlock* CurrentBulletCountLabel;
+	
 	virtual void NativeOnInitialized() override;
-
+	UFUNCTION()
+	void UpdateWeaponRelatedUI(UTP_WeaponComponent* WeaponComponent);
 private:
 	UFUNCTION()
 	void UpdateRemainTime(int RemainTime);
 	UFUNCTION()
 	void UpdateScore(float Score);
+
 	UFUNCTION()
-	void MakeFrontSightFollowsRecoil(float Recoil);
-	
+	void UpdateFrontSightPosition(float Recoil);
 	FVector2D InitialFrontSightPosition;
 };
 

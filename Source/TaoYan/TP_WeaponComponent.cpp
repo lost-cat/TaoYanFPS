@@ -12,6 +12,8 @@
 #include "Animation/AnimInstance.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Components/Image.h"
+#include "Components/ScaleBox.h"
+#include "Components/TextBlock.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "UMG/MainUIWidget.h"
@@ -27,7 +29,7 @@ UTP_WeaponComponent::UTP_WeaponComponent()
 
 void UTP_WeaponComponent::Fire()
 {
-	if (Character == nullptr || Character->GetController() == nullptr)
+	if (Character == nullptr || Character->GetController() == nullptr || CurrentBulletCount <= 0)
 	{
 		return;
 	}
@@ -35,7 +37,7 @@ void UTP_WeaponComponent::Fire()
 	HandleFire();
 
 	// Notify the delegate that the weapon has fired
-	
+
 	// Try and play the sound if specified
 	if (FireSound != nullptr)
 	{
@@ -78,8 +80,10 @@ void UTP_WeaponComponent::HandleFire_Implementation()
 			Projectile->SetCharacter(Character);
 
 			// Recoil will up when firing
+			CurrentBulletCount--;
 			Recoil += 1.0f;
 			OnRecoilChanged.Broadcast(Recoil);
+			OnFired.Broadcast(this);
 		}
 	}
 }
@@ -123,14 +127,21 @@ bool UTP_WeaponComponent::AttachWeapon(ATaoYanCharacter* TargetCharacter)
 	if (FoundWidgets.Num() > 0)
 	{
 		auto MainWidget = Cast<UMainUIWidget>(FoundWidgets[0]);
+		MainWidget->UpdateWeaponRelatedUI(this);
 		MainWidget->FrontSightImage->SetVisibility(ESlateVisibility::Visible);
+		MainWidget->BulletScaleBox->SetVisibility(ESlateVisibility::Visible);
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("FrontSightImage Visible"));
-		OnRecoilChanged.AddUFunction(MainWidget, "MakeFrontSightFollowsRecoil");
-		
+		OnRecoilChanged.AddUFunction(MainWidget, "UpdateFrontSightPosition");
+		OnFired.AddUFunction(MainWidget, "UpdateWeaponRelatedUI");
 	}
 	return true;
 }
 
+void UTP_WeaponComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	CurrentBulletCount = MagazineSize;
+}
 
 void UTP_WeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
@@ -155,9 +166,9 @@ void UTP_WeaponComponent::TickComponent(float DeltaTime, enum ELevelTick TickTyp
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// Recoil will descend when not firing 
-	if (Character!=nullptr)
+	if (Character != nullptr)
 	{
-		Recoil = FMath::Max(Recoil - 5* DeltaTime, 0.0f);
+		Recoil = FMath::Max(Recoil - 5 * DeltaTime, 0.0f);
 		OnRecoilChanged.Broadcast(Recoil);
 		// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Recoil: %f"), Recoil));
 	}
