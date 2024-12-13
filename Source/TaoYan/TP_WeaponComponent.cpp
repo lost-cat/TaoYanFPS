@@ -122,17 +122,15 @@ bool UTP_WeaponComponent::AttachWeapon(ATaoYanCharacter* TargetCharacter)
 			EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Triggered, this, &UTP_WeaponComponent::Fire);
 		}
 	}
+	// Update the Main_UI
 	TArray<UUserWidget*> FoundWidgets;
 	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(this, FoundWidgets, UMainUIWidget::StaticClass(), true);
 	if (FoundWidgets.Num() > 0)
 	{
 		auto MainWidget = Cast<UMainUIWidget>(FoundWidgets[0]);
-		MainWidget->UpdateWeaponRelatedUI(this);
-		MainWidget->FrontSightImage->SetVisibility(ESlateVisibility::Visible);
-		MainWidget->BulletScaleBox->SetVisibility(ESlateVisibility::Visible);
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("FrontSightImage Visible"));
-		OnRecoilChanged.AddUFunction(MainWidget, "UpdateFrontSightPosition");
-		OnFired.AddUFunction(MainWidget, "UpdateWeaponRelatedUI");
+		MainWidget->BindEquipWeaponComponent(this);
+		
+		
 	}
 	return true;
 }

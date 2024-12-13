@@ -35,8 +35,17 @@ public:
 	UTextBlock* CurrentBulletCountLabel;
 	
 	virtual void NativeOnInitialized() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+	
 	UFUNCTION()
 	void UpdateWeaponRelatedUI(UTP_WeaponComponent* WeaponComponent);
+
+	UFUNCTION()
+	void BindEquipWeaponComponent(UTP_WeaponComponent* WeaponComponent);
+	UFUNCTION()
+	void ResetEquipWeaponComponent();
+
+	
 private:
 	UFUNCTION()
 	void UpdateRemainTime(int RemainTime);
@@ -46,6 +55,9 @@ private:
 	UFUNCTION()
 	void UpdateFrontSightPosition(float Recoil);
 	FVector2D InitialFrontSightPosition;
+
+	UPROPERTY()
+	UTP_WeaponComponent* EquipWeaponComponent;
 };
 
 
