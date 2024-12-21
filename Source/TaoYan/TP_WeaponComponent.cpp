@@ -77,8 +77,14 @@ void UTP_WeaponComponent::HandleFire_Implementation()
 			// Spawn the projectile at the muzzle
 			auto Projectile = World->SpawnActor<ATaoYanProjectile>(ProjectileClass, SpawnLocation, SpawnRotation,
 			                                                       ActorSpawnParams);
-			Projectile->SetCharacter(Character);
 
+
+			if (Projectile == nullptr)
+			{
+				return;
+			}
+
+			Projectile->SetCharacter(Character);
 			// Recoil will up when firing
 			CurrentBulletCount--;
 			Recoil += 1.0f;
@@ -122,15 +128,13 @@ bool UTP_WeaponComponent::AttachWeapon(ATaoYanCharacter* TargetCharacter)
 			EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Triggered, this, &UTP_WeaponComponent::Fire);
 		}
 	}
-	// Update the Main_UI
+	// Bind the weapon to the MainUIWidget
 	TArray<UUserWidget*> FoundWidgets;
 	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(this, FoundWidgets, UMainUIWidget::StaticClass(), true);
 	if (FoundWidgets.Num() > 0)
 	{
 		auto MainWidget = Cast<UMainUIWidget>(FoundWidgets[0]);
 		MainWidget->BindEquipWeaponComponent(this);
-		
-		
 	}
 	return true;
 }
