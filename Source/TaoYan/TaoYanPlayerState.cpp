@@ -2,3 +2,9 @@
 
 
 #include "TaoYanPlayerState.h"
+
+void ATaoYanPlayerState::OnRep_Score()
+{
+	Super::OnRep_Score();
+	OnScoreUpdate.Broadcast(GetScore());
+}

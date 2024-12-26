@@ -9,6 +9,7 @@
 /**
  * 
  */
+DECLARE_EVENT_OneParam(ATaoYanGameState,FOnRemainTimeUpdate,int);
 UCLASS()
 class TAOYAN_API ATaoYanGameState : public AGameStateBase
 {
@@ -16,9 +17,23 @@ class TAOYAN_API ATaoYanGameState : public AGameStateBase
 
 public:
 	bool IsInScoreTime() const { return RemainTime > 0.0f; }
-	void SetRemainTime(const float InTime) { RemainTime = InTime; }
+	
+	void SetRemainTime(const float InTime);
 	float GetRemainTime() const { return RemainTime; }
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 private:
-	UPROPERTY()
+	UFUNCTION()
+	void OnRep_RemainTime();
+	UFUNCTION()
+	void OnRemainTimeUpdate();
+public:
+	FOnRemainTimeUpdate OnRemainTimeUpdated;
+private:
+	UPROPERTY(ReplicatedUsing  = OnRep_RemainTime)
 	float RemainTime;
+
+	
+
 };

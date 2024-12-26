@@ -61,11 +61,11 @@ void ATaoYanGameMode::StartScoreTime()
  */
 void ATaoYanGameMode::UpdateTime()
 {
+	const auto TimeStep =GetWorld()->GetTimerManager().GetTimerRate(TimerHandle);
+	
 	GetGameState<ATaoYanGameState>()->SetRemainTime(
-		GetGameState<ATaoYanGameState>()->GetRemainTime() -
-		GetWorld()->GetTimerManager().GetTimerRate(TimerHandle));
-
-	OnRemainTimeUpdate.Broadcast(GetGameState<ATaoYanGameState>()->GetRemainTime());
+		GetGameState<ATaoYanGameState>()->GetRemainTime() -TimeStep
+		);
 	if (GetGameState<ATaoYanGameState>()->GetRemainTime() <= 0.0f)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(TimerHandle);

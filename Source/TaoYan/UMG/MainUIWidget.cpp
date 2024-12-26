@@ -8,6 +8,7 @@
 #include "Components/TextBlock.h"
 #include "TaoYan/TaoYanGameMode.h"
 #include "TaoYan/TaoYanPlayerController.h"
+#include "TaoYan/TaoYanPlayerState.h"
 #include "TaoYan/TP_WeaponComponent.h"
 
 void UMainUIWidget::NativeOnInitialized()
@@ -16,16 +17,15 @@ void UMainUIWidget::NativeOnInitialized()
 
 	
 	// bind remain time update
-	if (auto GameMode = GetWorld()->GetAuthGameMode(); GameMode)
+	if (auto GameState = GetWorld()->GetGameStateChecked<ATaoYanGameState>(); GameState)
 	{
-		auto TaoYanGameMode = Cast<ATaoYanGameMode>(GameMode);
-		TaoYanGameMode->OnRemainTimeUpdate.AddUFunction(this, "UpdateRemainTime");
+		GameState->OnRemainTimeUpdated.AddUFunction(this,"UpdateRemainTime");
 	}
 
 	// bind score update
-	if (const auto PlayerController = GetWorld()->GetFirstPlayerController<ATaoYanPlayerController>())
+	if (const auto PlayerState = GetWorld()->GetFirstPlayerController()->GetPlayerState<ATaoYanPlayerState>();PlayerState)
 	{
-		PlayerController->OnScoreUpdate.AddUFunction(this, "UpdateScore");
+		PlayerState->OnScoreUpdate.AddUFunction(this,"UpdateScore");
 	}
 
 	// hind front sight because pawn default don't have weapon
@@ -66,9 +66,9 @@ void UMainUIWidget::UpdateWeaponRelatedUI(UTP_WeaponComponent* WeaponComponent)
 	{
 		return;
 	}
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, TEXT("update front sight"));
+	// GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, TEXT("update front sight"));
 
-	UpdateFrontSightPosition(WeaponComponent->Recoil);
+	UpdateFrontSightPosition(WeaponComponent->GetRecoil());
 
 	RemainBulletCountLabel->SetText(FText::FromString(FString::FromInt(WeaponComponent->MagazineSize)));
 	CurrentBulletCountLabel->SetText(FText::FromString(FString::FromInt(WeaponComponent->GetCurrentBulletCount())));

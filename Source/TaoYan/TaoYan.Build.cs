@@ -6,9 +6,9 @@ public class TaoYan : ModuleRules
 {
 	public TaoYan(ReadOnlyTargetRules Target) : base(Target)
 	{
-		PrivateDependencyModuleNames.AddRange(new string[] { "AIModule" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "AIModule"});
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput","UMG" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput","UMG","CommonUI", "SLGModule" });
 	}
 }

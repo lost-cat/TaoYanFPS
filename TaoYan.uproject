@@ -13,6 +13,11 @@
 				"AIModule",
 				"Engine"
 			]
+		},
+		{
+			"Name": "SLGModule",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [
@@ -22,6 +27,10 @@
 			"TargetAllowList": [
 				"Editor"
 			]
+		},
+		{
+			"Name": "CommonUI",
+			"Enabled": true
 		}
 	]
 }

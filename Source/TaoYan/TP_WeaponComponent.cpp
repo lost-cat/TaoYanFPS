@@ -16,6 +16,7 @@
 #include "Components/TextBlock.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
+#include "Net/UnrealNetwork.h"
 #include "UMG/MainUIWidget.h"
 
 // Sets default values for this component's properties
@@ -24,6 +25,10 @@ UTP_WeaponComponent::UTP_WeaponComponent()
 	// Default offset from the character location for projectiles to spawn
 	MuzzleOffset = FVector(100.0f, 0.0f, 10.0f);
 	PrimaryComponentTick.TickInterval = 0.1f;
+	// auto Object = this->GetOuter();
+	// UE_LOG(LogTemp, Warning, TEXT("Outer: %s"), *Object->GetName());
+	// auto Owner = this->GetOwner();
+	// UE_LOG(LogTemp, Warning, TEXT("Owner: %s"), *Owner->GetName());
 }
 
 
@@ -87,8 +92,7 @@ void UTP_WeaponComponent::HandleFire_Implementation()
 			Projectile->SetCharacter(Character);
 			// Recoil will up when firing
 			CurrentBulletCount--;
-			Recoil += 1.0f;
-			OnRecoilChanged.Broadcast(Recoil);
+			SetRecoil(GetRecoil() + 1.0f);
 			OnFired.Broadcast(this);
 		}
 	}
@@ -108,8 +112,13 @@ bool UTP_WeaponComponent::AttachWeapon(ATaoYanCharacter* TargetCharacter)
 	FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
 	AttachToComponent(Character->GetMesh1P(), AttachmentRules, FName(TEXT("GripPoint")));
 
+
 	// add the weapon as an instance component to the character
 	Character->AddInstanceComponent(this);
+
+	//  set the owner of the weapon to the character
+	auto Actor = Cast<AActor>(GetOuter());
+	Actor->SetOwner(Character);
 
 	// Set up action bindings
 	if (APlayerController* PlayerController = Cast<APlayerController>(Character->GetController()))
@@ -145,6 +154,25 @@ void UTP_WeaponComponent::BeginPlay()
 	CurrentBulletCount = MagazineSize;
 }
 
+void UTP_WeaponComponent::OnRecoilChange()
+{
+	OnRecoilChanged.Broadcast(Recoil);
+}
+
+void UTP_WeaponComponent::OnRep_Recoil()
+{
+	OnRecoilChange();
+}
+
+void UTP_WeaponComponent::SetRecoil(const float InRecoil)
+{
+	if (GetOwnerRole() == ROLE_Authority)
+	{
+		Recoil = InRecoil;
+		OnRecoilChange();
+	}
+}
+
 void UTP_WeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (Character == nullptr)
@@ -162,7 +190,7 @@ void UTP_WeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 }
 
-void UTP_WeaponComponent::TickComponent(float DeltaTime, enum ELevelTick TickType,
+void UTP_WeaponComponent::TickComponent(const float DeltaTime, const enum ELevelTick TickType,
                                         FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -170,8 +198,15 @@ void UTP_WeaponComponent::TickComponent(float DeltaTime, enum ELevelTick TickTyp
 	// Recoil will descend when not firing 
 	if (Character != nullptr)
 	{
-		Recoil = FMath::Max(Recoil - 5 * DeltaTime, 0.0f);
-		OnRecoilChanged.Broadcast(Recoil);
+		const auto NewRecoil = FMath::Max(Recoil - 5 * DeltaTime, 0.0f);
+		SetRecoil(NewRecoil);
 		// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Recoil: %f"), Recoil));
 	}
+}
+
+void UTP_WeaponComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UTP_WeaponComponent, Recoil);
+	
 }

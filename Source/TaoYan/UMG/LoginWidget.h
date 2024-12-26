@@ -25,10 +25,11 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UButton* LoginButton;
-
-	UPROPERTY(BlueprintReadWrite,EditAnywhere)
-	FName LevelToLoad;
 private:
 	UFUNCTION()
 	void OnLoginButtonClicked();
+
+private:
+	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,meta=(AllowPrivateAccess="true"))
+	TSoftObjectPtr<UWorld> MainWorld;
 };

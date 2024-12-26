@@ -8,7 +8,7 @@
 #include "TaoYanGameMode.generated.h"
 
 
-DECLARE_EVENT_OneParam(ATaoYanGameMode,FOnRemainTimeUpdate,int);
+
 UCLASS(minimalapi)
 class ATaoYanGameMode : public AGameModeBase
 {
@@ -30,7 +30,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RandomMarkSpecialScoreCube(int Special);
 
-	FOnRemainTimeUpdate OnRemainTimeUpdate;
+
 protected:
 	void UpdateTime();
 	virtual void BeginPlay() override;
