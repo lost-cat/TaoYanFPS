@@ -8,6 +8,7 @@
 #include "GameFramework/PlayerController.h"
 #include "TurnBasedPlayerController.generated.h"
 
+class ATurnBasedCharacterBase;
 class UInputAction;
 class ATurnBasedCharactor;
 class UInputMappingContext;
@@ -23,7 +24,8 @@ class SLGMODULE_API ATurnBasedPlayerController : public APlayerController
 
 public:
 	void SetSelectedPawn(ATurnBasedCharactor* Charactor);
-
+	AActor* GetHoverActor() const;
+	bool GetCursorLocation(FVector& OutLocation) const;
 protected:
 	virtual void BeginPlay() override;
 	void UnSelect();
@@ -46,5 +48,5 @@ public:
   	UPROPERTY(BlueprintReadOnly,EditDefaultsOnly,Category=GamePlay)
   	TSoftObjectPtr<UInputAction> SelectPawnAction;
   private:
-  	TObjectPtr<ATurnBasedCharactor> SelectedPawn;
+  	TObjectPtr<ATurnBasedCharacterBase> SelectedPawn;
   };

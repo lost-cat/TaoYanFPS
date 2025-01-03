@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "TaoYanGameState.h"
 #include "GameFramework/GameModeBase.h"
 #include "TaoYanGameMode.generated.h"
 

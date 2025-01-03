@@ -50,6 +50,7 @@ public:
 	// Sets default values for this pawn's properties
 	ATurnBasedPlayerPawn();
 
+	AActor* GetHoverActor() const { return HoverActor.Get(); }
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -77,6 +78,7 @@ private:
 	void Zoom(const FInputActionValue& Value);
 	
 	UCurveFloat* GetLazyLoadedZoomCurve();
+	
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Camera)
 	float ZoomValue = 0.5f;

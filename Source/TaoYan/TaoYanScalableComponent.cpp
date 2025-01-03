@@ -3,7 +3,6 @@
 
 #include "TaoYanScalableComponent.h"
 
-#include "TaoYanGameMode.h"
 #include "TaoYanPlayerController.h"
 #include "TaoYanProjectile.h"
 #include "GameFramework/Character.h"

@@ -3,12 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "EnhancedInputComponent.h"
-#include "InputActionValue.h"
 #include "TurnBasedCharacterBase.h"
-#include "GameFramework/Character.h"
 #include "TurnBasedCharactor.generated.h"
 
+class ATurnBasedPlayerController;
 class UWidgetComponent;
 class UInputAction;
 
@@ -21,8 +19,7 @@ public:
 	// Sets default values for this character's properties
 	ATurnBasedCharactor();
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
-	TSoftObjectPtr<UInputAction> PawnMoveAction;
+
 
 
 protected:
@@ -34,14 +31,16 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION()
-	void MoveTo();
+	void ShowOperationContents();
 
 	UFUNCTION()
+	void MoveToLocation(const FVector& TargetLocation);
 	virtual void Attack(ATurnBasedCharacterBase* Target) override;
+
 	virtual void OnSelected(APlayerController* PlayerController) override;
 	virtual void OnUnSelected(APlayerController* PlayerController) override;
 
 private:
 	uint32 PawnMoveInputActionHandle = -1;
-	
+	uint32 AttackInputActionHandle = -1;
 };

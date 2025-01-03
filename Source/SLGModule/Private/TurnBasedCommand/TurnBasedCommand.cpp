@@ -3,8 +3,6 @@
 
 #include "TurnBasedCommand.h"
 
-#include "NavigationPath.h"
-#include "NavigationSystem.h"
 #include "TurnBasedCharactor.h"
 #include "Runtime/AIModule/Classes/AIController.h"
 

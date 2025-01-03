@@ -12,6 +12,12 @@
 UCLASS()
 class SLGMODULE_API ATurnBasedEnemy : public ATurnBasedCharacterBase
 {
+public:
+	virtual void OnSelected(APlayerController* PlayerController) override;
+	virtual void OnUnSelected(APlayerController* PlayerController) override;
+	virtual void Attack(ATurnBasedCharacterBase* Target) override;
+	virtual void OnAttacked(ATurnBasedCharacterBase* Attacker) override;
+
+private:
 	GENERATED_BODY()
-	
 };

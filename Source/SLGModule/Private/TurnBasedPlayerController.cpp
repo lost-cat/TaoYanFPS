@@ -7,6 +7,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 #include "TurnBasedCharactor.h"
+#include "TurnBasedPlayerPawn.h"
 
 ATurnBasedPlayerController::ATurnBasedPlayerController()
 {
@@ -17,8 +18,25 @@ void ATurnBasedPlayerController::SetSelectedPawn(ATurnBasedCharactor* Charactor)
 {
 	SelectedPawn = Charactor;
 	Charactor->OnSelected(this);
-	
-	BindInputMapping(PawnOperationInputMappingContext,1);
+
+	BindInputMapping(PawnOperationInputMappingContext, 1);
+}
+
+AActor* ATurnBasedPlayerController::GetHoverActor() const
+{
+	return GetPawn<ATurnBasedPlayerPawn>() ? GetPawn<ATurnBasedPlayerPawn>()->GetHoverActor() : nullptr;
+}
+
+bool ATurnBasedPlayerController::GetCursorLocation(FVector& OutLocation) const
+{
+	FHitResult HitResult;
+	GetHitResultUnderCursor(ECC_Visibility, true, HitResult);
+	if (HitResult.bBlockingHit)
+	{
+		OutLocation = HitResult.Location;
+		return true;
+	}
+	return false;
 }
 
 void ATurnBasedPlayerController::UnSelect()
@@ -34,7 +52,8 @@ void ATurnBasedPlayerController::UnSelect()
 }
 
 
-void ATurnBasedPlayerController::BindInputMapping(const TSoftObjectPtr<UInputMappingContext>& InputMappingContext, int32 Priority = 0)
+void ATurnBasedPlayerController::BindInputMapping(const TSoftObjectPtr<UInputMappingContext>& InputMappingContext,
+                                                  int32 Priority = 0)
 {
 	if (ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(Player))
 	{
@@ -58,7 +77,6 @@ void ATurnBasedPlayerController::BeginPlay()
 
 void ATurnBasedPlayerController::SelectPawn(const FInputActionValue& InputActionValue)
 {
-	UE_LOG(LogTemp, Log, TEXT("SelectPawn"));
 	FHitResult HitResult;
 	GetHitResultUnderCursor(ECC_Camera, false, HitResult);
 	if (HitResult.bBlockingHit)

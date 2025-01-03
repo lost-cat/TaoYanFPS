@@ -5,7 +5,6 @@
 
 #include "Components/Button.h"
 #include "Components/EditableTextBox.h"
-#include "Kismet/GameplayStatics.h"
 #include "TaoYan/TaoYanGameInstance.h"
 
 void ULoginWidget::NativeOnInitialized()

@@ -3,9 +3,8 @@
 
 #include "TurnBasedCharactor.h"
 
-#include "EnhancedInputComponent.h"
 #include "TurnBasedAIController.h"
-#include "Components/WidgetComponent.h"
+#include "TurnBasedEnemy.h"
 #include "Kismet/GameplayStatics.h"
 #include "Navigation/PathFollowingComponent.h"
 
@@ -14,7 +13,6 @@ ATurnBasedCharactor::ATurnBasedCharactor()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
 }
 
 // Called when the game starts or when spawned
@@ -29,30 +27,38 @@ void ATurnBasedCharactor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void ATurnBasedCharactor::MoveTo()
+void ATurnBasedCharactor::ShowOperationContents()
 {
-	UE_LOG(LogTemp, Warning, TEXT("ATurnBasedCharactor::MoveTo"));
-
-
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	FHitResult HitResult;
+	PlayerController->GetHitResultUnderCursor(ECC_Visibility, true, HitResult);
+	if (HitResult.bBlockingHit)
+	{
+		UE_LOG(LogTemp, Display, TEXT("ATurnBasedCharactor::ShowOperationContents"));
+		if (HitResult.GetActor()->IsA<ATurnBasedEnemy>())
+		{
+			ATurnBasedEnemy* Enemy = Cast<ATurnBasedEnemy>(HitResult.GetActor());
+			// MoveToActorAndAttack(Enemy);
+		}
+	}
 	if (auto AIController = GetController<ATurnBasedAIController>())
 	{
-		if (AIController->GetMoveStatus()!= EPathFollowingStatus::Idle)
+		if (AIController->GetMoveStatus() != EPathFollowingStatus::Idle)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("ATurnBasedCharactor::MoveTo AIController is Moving"));
 			return;
 		}
 
-		APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+
 		if (PlayerController)
 		{
-			FHitResult  HitResult;
 			PlayerController->GetHitResultUnderCursor(ECC_Visibility, true, HitResult);
 			if (HitResult.bBlockingHit)
-			{  
+			{
 				UE_LOG(LogPathFollowing, Warning, TEXT("ATurnBasedCharactor::MoveTo HitResult"));
 				const auto TargetLocation = HitResult.Location;
 				// UAIBlueprintHelperLibrary::SimpleMoveToLocation(AIController, TargetLocation);
-				AIController->MoveToLocation(TargetLocation,10.0f,true,true,true);
+				AIController->MoveToLocation(TargetLocation, 10.0f, true, true, true);
 			}
 		}
 	}
@@ -62,41 +68,119 @@ void ATurnBasedCharactor::MoveTo()
 	}
 }
 
+
+// void ATurnBasedCharactor::MoveToActorAndAttack(const AActor* TargetActor)
+// {
+// 	const auto TurnBasedAIController = GetController<ATurnBasedAIController>();
+// 	if (TurnBasedAIController == nullptr)
+// 	{
+// 		return;
+// 	}
+// 	FAIRequestID FaiRequestID = TurnBasedAIController->MoveToActorIfIdle(
+// 		TargetActor, 20.0f, true, true, true, nullptr, true);
+// 	if (FaiRequestID == FAIRequestID::InvalidRequest)
+// 	{
+// 		return;
+// 	}
+// 	AttackDelegateHandle = TurnBasedAIController->GetPathFollowingComponent()->OnRequestFinished.AddUFunction(
+// 		this, "Attack", Cast<ATurnBasedCharacterBase>(TargetActor));
+// }
+
+void ATurnBasedCharactor::MoveToLocation(const FVector& TargetLocation)
+{
+	if (const auto AIController = GetController<ATurnBasedAIController>())
+	{
+		if (AIController->GetMoveStatus() != EPathFollowingStatus::Idle)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ATurnBasedCharactor::MoveTo AIController is Moving"));
+			return;
+		}
+		AIController->MoveToLocation(TargetLocation, 20.0f, true, true, true);
+	}
+}
+
+// void ATurnBasedCharactor::MoveToCursor()
+// {
+// 	UE_LOG(LogTemp, Display, TEXT("MoveToCursor"));
+// 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+// 	if (const auto TurnBasedPlayerController = Cast<ATurnBasedPlayerController>(PlayerController))
+// 	{
+// 		if (const auto HoverActor = TurnBasedPlayerController->GetHoverActor(); HoverActor && HoverActor->IsA<
+// 			ATurnBasedCharacterBase>())
+// 		{
+// 			//  if the cursor location is near the character, then do not move
+// 			return;
+// 		}
+//
+// 		if (FVector CursorLocation; TurnBasedPlayerController->GetCursorLocation(CursorLocation))
+// 		{
+// 			MoveToLocation(CursorLocation);
+// 		}
+// 	}
+// }
+
 void ATurnBasedCharactor::Attack(ATurnBasedCharacterBase* Target)
 {
-	
+	Super::Attack(Target);
+	UE_LOG(LogTemp, Display, TEXT("Attack %s"), *Target->GetName());
+	// const auto TurnBasedAIController = GetController<ATurnBasedAIController>();
+	// if (TurnBasedAIController == nullptr)
+	// {
+	// 	return;
+	// }
+	// TurnBasedAIController->GetPathFollowingComponent()->OnRequestFinished.Remove(AttackDelegateHandle);
 }
+
+// void ATurnBasedCharactor::AttackPawnUnderCursor()
+// {
+// 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+// 	const auto TurnBasedPlayerController = Cast<ATurnBasedPlayerController>(PlayerController);
+// 	if (TurnBasedPlayerController == nullptr) // not player controller
+// 	{
+// 		return;
+// 	}
+// 	const auto HoverActor = TurnBasedPlayerController->GetHoverActor();
+// 	if (HoverActor == nullptr || !HoverActor->IsA<ATurnBasedEnemy>()) // no target actor  under cursor or not enemy
+// 	{
+// 		return;
+// 	}
+//
+// 	// MoveToActorAndAttack(HoverActor);
+// }
 
 
 void ATurnBasedCharactor::OnSelected(APlayerController* PlayerController)
 {
-
-	if (PlayerController)
-	{
-		if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(
-			PlayerController->InputComponent))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("OnSelected and BindAction"));
-			EnhancedInputComponent->RemoveBindingByHandle(PawnMoveInputActionHandle);
-			FEnhancedInputActionEventBinding& EnhancedInputActionEventBinding = EnhancedInputComponent->BindAction(
-				PawnMoveAction.LoadSynchronous(), ETriggerEvent::Completed,
-				this, &ATurnBasedCharactor::MoveTo);
-
-			PawnMoveInputActionHandle = EnhancedInputActionEventBinding.GetHandle();
-		}
-	}
+	Super::OnSelected(PlayerController);
+	UE_LOG(LogTemp, Display, TEXT("OnSelected Pawn: %s"), *GetName());
+	// if (PlayerController)
+	// {
+	// 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(
+	// 		PlayerController->InputComponent))
+	// 	{
+	// 		EnhancedInputComponent->RemoveBindingByHandle(PawnMoveInputActionHandle);
+	// 		FEnhancedInputActionEventBinding& EnhancedInputActionEventBinding = EnhancedInputComponent->BindAction(
+	// 			PawnMoveAction.LoadSynchronous(), ETriggerEvent::Completed,
+	// 			this, &ATurnBasedCharactor::MoveToCursor);
+	//
+	// 		PawnMoveInputActionHandle = EnhancedInputActionEventBinding.GetHandle();
+	// 		EnhancedInputComponent->BindAction(AttackAction.LoadSynchronous(), ETriggerEvent::Completed,
+	// 		                                   this, &ATurnBasedCharactor::AttackPawnUnderCursor);
+	// 	}
+	// }
 }
 
 void ATurnBasedCharactor::OnUnSelected(APlayerController* PlayerController)
 {
-	if (PlayerController)
-	{
-		if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(
-			PlayerController->InputComponent))
-		{
-			bool bRemoveBindingByHandle = EnhancedInputComponent->RemoveBindingByHandle(PawnMoveInputActionHandle);
-
-			UE_LOG(LogTemp, Warning, TEXT("UnSelected and RemoveBinding %d"), bRemoveBindingByHandle);
-		}
-	}
+	Super::OnUnSelected(PlayerController);
+	// if (PlayerController)
+	// {
+	// 	// if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(
+	// 	// 	PlayerController->InputComponent))
+	// 	// {
+	// 	// 	bool bRemoveBindingByHandle = EnhancedInputComponent->RemoveBindingByHandle(PawnMoveInputActionHandle);
+	// 	//
+	// 	// 	UE_LOG(LogTemp, Warning, TEXT("UnSelected and RemoveBinding %d"), bRemoveBindingByHandle);
+	// 	// }
+	// }
 }

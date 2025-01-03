@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "TurnBasedCharacterBase.generated.h"
 
+class UTurnBasedCharacterHealthBar;
 class UWidgetComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedSignature, float, NewValue);
 
@@ -45,6 +46,8 @@ private:
 	
 	float Health = 100.0f;
 	float MaxHealth = 100.0f;
+
+	TSubclassOf<UTurnBasedCharacterHealthBar> HealthBarClass;
 };
 
 
