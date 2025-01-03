@@ -38,9 +38,13 @@ public:
 	
 	virtual  void OnSelected(APlayerController* PlayerController);
 	virtual  void OnUnSelected(APlayerController* PlayerController);
+	virtual void Attack(ATurnBasedCharacterBase* Target);
+	virtual  void OnAttacked(ATurnBasedCharacterBase* Attacker);
 
 private:
 	
 	float Health = 100.0f;
 	float MaxHealth = 100.0f;
 };
+
+
