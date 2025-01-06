@@ -3,12 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "TurnBasedCharacterBase.h"
 #include "GameFramework/GameModeBase.h"
 #include "TurnBasedGameMode.generated.h"
 
 /**
  * 
  */
+
+class ATurnBasedCharacterBase;
 
 enum class ETurnType: uint8
 {
@@ -31,10 +34,28 @@ class SLGMODULE_API ATurnBasedGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
+	ATurnBasedGameMode();
+
 public:
 	FTurn GetCurrentTurn() const;
 	void ForwardTurn(ETurnType NextTurnType);
+
+	ATurnBasedCharacterBase* SpawnCharacterAtLocation(const TSubclassOf<ATurnBasedCharacterBase>& CharacterClass,
+	                                                  const FVector& Location);
+
+protected:
+	virtual void BeginPlay() override;
+
 private:
 	TArray<FTurn> TurnRecords;
-	
+	UPROPERTY()
+	TArray<ATurnBasedCharacterBase*> CharacterActionSequence;
+
+private:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=GamePlay, meta=(AllowPrivateAccess="true"))
+	TSubclassOf<ATurnBasedCharacterBase> PlayerCharacterClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=GamePlay, meta=(AllowPrivateAccess="true"))
+	TSubclassOf<ATurnBasedCharacterBase> EnemyCharacterClass;
 };
+
+

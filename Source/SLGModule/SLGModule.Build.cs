@@ -9,7 +9,7 @@ public class SLGModule : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "Core", "EnhancedInput","UMG","AIModule","NavigationSystem",
+                "Core", "EnhancedInput","UMG","AIModule","NavigationSystem", "CommonUI",
             }
         );
 
@@ -19,7 +19,7 @@ public class SLGModule : ModuleRules
                 "CoreUObject",
                 "Engine",
                 "Slate",
-                "SlateCore",
+                "SlateCore", "Niagara",
                 
                 
             }

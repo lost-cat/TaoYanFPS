@@ -8,6 +8,7 @@
 #include "InputMappingContext.h"
 #include "TurnBasedCharactor.h"
 #include "TurnBasedPlayerPawn.h"
+#include  "TurnBasedCharacterBase.h"
 
 ATurnBasedPlayerController::ATurnBasedPlayerController()
 {
@@ -20,6 +21,11 @@ void ATurnBasedPlayerController::SetSelectedPawn(ATurnBasedCharactor* Charactor)
 	Charactor->OnSelected(this);
 
 	BindInputMapping(PawnOperationInputMappingContext, 1);
+}
+
+APawn* ATurnBasedPlayerController::GetSelectedPawn() const
+{
+	return SelectedPawn.Get();
 }
 
 AActor* ATurnBasedPlayerController::GetHoverActor() const
@@ -37,6 +43,15 @@ bool ATurnBasedPlayerController::GetCursorLocation(FVector& OutLocation) const
 		return true;
 	}
 	return false;
+}
+
+void ATurnBasedPlayerController::AppendControlledPawn(ATurnBasedCharacterBase* PlayerCharacter)
+{
+	if (PlayerCharacter == nullptr)
+	{
+		return;
+	}
+	ControlledPawns.Add(PlayerCharacter);
 }
 
 void ATurnBasedPlayerController::UnSelect()

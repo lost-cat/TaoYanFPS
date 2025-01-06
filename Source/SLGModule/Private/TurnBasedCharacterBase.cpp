@@ -14,7 +14,7 @@ ATurnBasedCharacterBase::ATurnBasedCharacterBase()
 	PrimaryActorTick.bCanEverTick = true;
 
 	static ConstructorHelpers::FClassFinder<UTurnBasedCharacterHealthBar> HealthBarClassFinder(
-		TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/SLGContent/UI/BP_CharacterHealthBar.BP_CharacterHealthBar'"));
+		TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/SLGContent/UI/BP_CharacterHealthBar.BP_CharacterHealthBar_C'"));
 	HealthBarClass = HealthBarClassFinder.Class;
 	HealthBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBar"));
 	HealthBar->SetupAttachment(GetRootComponent());
@@ -42,7 +42,6 @@ void ATurnBasedCharacterBase::Tick(float DeltaTime)
 
 void ATurnBasedCharacterBase::OnSelected(APlayerController* PlayerController)
 {
-	
 }
 
 void ATurnBasedCharacterBase::OnUnSelected(APlayerController* PlayerController)

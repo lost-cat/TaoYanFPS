@@ -6,6 +6,8 @@
 #include "TurnBasedCharacterBase.h"
 #include "TurnBasedCharactor.generated.h"
 
+class UNiagaraComponent;
+class UNiagaraSystem;
 class ATurnBasedPlayerController;
 class UWidgetComponent;
 class UInputAction;
@@ -19,17 +21,16 @@ public:
 	// Sets default values for this character's properties
 	ATurnBasedCharactor();
 
-
-
-
+	TObjectPtr<UNiagaraComponent> PathIndicatorComponent;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void ShowMovementRange();
 	UFUNCTION()
 	void ShowOperationContents();
 
@@ -41,6 +42,14 @@ public:
 	virtual void OnUnSelected(APlayerController* PlayerController) override;
 
 private:
+	void UpdatePathIndicator();
+	void ShowNiagaraPath();
+
+private:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,Category="Effects", meta=(AllowPrivateAccess="true"))
+	TSoftObjectPtr<UNiagaraSystem> PathIndicator;
+
 	uint32 PawnMoveInputActionHandle = -1;
 	uint32 AttackInputActionHandle = -1;
+	FTimerHandle UpdatePathTimerHandle;
 };

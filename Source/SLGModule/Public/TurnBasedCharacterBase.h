@@ -20,6 +20,8 @@ public:
 	ATurnBasedCharacterBase();
 
 
+	float GetMaxDistancePerTurn() const { return MaxDistancePerTurn; }
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Widget")
 	TObjectPtr<UWidgetComponent> HealthBar;
 
@@ -27,27 +29,29 @@ public:
 	FOnAttributeChangedSignature OnHealthChanged;
 	UPROPERTY(BlueprintAssignable, Category = "GAS|Attribute")
 	FOnAttributeChangedSignature OnMaxHealthChanged;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-
-
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	
-	virtual  void OnSelected(APlayerController* PlayerController);
-	virtual  void OnUnSelected(APlayerController* PlayerController);
+
+	virtual void OnSelected(APlayerController* PlayerController);
+	virtual void OnUnSelected(APlayerController* PlayerController);
 	virtual void Attack(ATurnBasedCharacterBase* Target);
-	virtual  void OnAttacked(ATurnBasedCharacterBase* Attacker);
+	virtual void OnAttacked(ATurnBasedCharacterBase* Attacker);
 
 private:
-	
 	float Health = 100.0f;
 	float MaxHealth = 100.0f;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Widget", meta=(AllowPrivateAccess="true"))
 	TSubclassOf<UTurnBasedCharacterHealthBar> HealthBarClass;
+
+	float Speed;
+	float MaxDistancePerTurn = 500.0f;
+
+	bool bActionable = true;
 };
-
-

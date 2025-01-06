@@ -24,8 +24,11 @@ class SLGMODULE_API ATurnBasedPlayerController : public APlayerController
 
 public:
 	void SetSelectedPawn(ATurnBasedCharactor* Charactor);
+	APawn* GetSelectedPawn() const;
 	AActor* GetHoverActor() const;
 	bool GetCursorLocation(FVector& OutLocation) const;
+	void AppendControlledPawn(ATurnBasedCharacterBase* PlayerCharacter);
+
 protected:
 	virtual void BeginPlay() override;
 	void UnSelect();
@@ -49,4 +52,5 @@ public:
   	TSoftObjectPtr<UInputAction> SelectPawnAction;
   private:
   	TObjectPtr<ATurnBasedCharacterBase> SelectedPawn;
+	TArray<ATurnBasedCharacterBase*> ControlledPawns;
   };

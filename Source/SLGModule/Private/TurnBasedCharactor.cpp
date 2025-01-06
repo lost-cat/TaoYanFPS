@@ -3,8 +3,13 @@
 
 #include "TurnBasedCharactor.h"
 
+#include "NavigationPath.h"
+#include "NavigationSystem.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "TurnBasedAIController.h"
 #include "TurnBasedEnemy.h"
+#include "TurnBasedPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Navigation/PathFollowingComponent.h"
 
@@ -25,6 +30,10 @@ void ATurnBasedCharactor::BeginPlay()
 void ATurnBasedCharactor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void ATurnBasedCharactor::ShowMovementRange()
+{
 }
 
 void ATurnBasedCharactor::ShowOperationContents()
@@ -153,21 +162,6 @@ void ATurnBasedCharactor::OnSelected(APlayerController* PlayerController)
 {
 	Super::OnSelected(PlayerController);
 	UE_LOG(LogTemp, Display, TEXT("OnSelected Pawn: %s"), *GetName());
-	// if (PlayerController)
-	// {
-	// 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(
-	// 		PlayerController->InputComponent))
-	// 	{
-	// 		EnhancedInputComponent->RemoveBindingByHandle(PawnMoveInputActionHandle);
-	// 		FEnhancedInputActionEventBinding& EnhancedInputActionEventBinding = EnhancedInputComponent->BindAction(
-	// 			PawnMoveAction.LoadSynchronous(), ETriggerEvent::Completed,
-	// 			this, &ATurnBasedCharactor::MoveToCursor);
-	//
-	// 		PawnMoveInputActionHandle = EnhancedInputActionEventBinding.GetHandle();
-	// 		EnhancedInputComponent->BindAction(AttackAction.LoadSynchronous(), ETriggerEvent::Completed,
-	// 		                                   this, &ATurnBasedCharactor::AttackPawnUnderCursor);
-	// 	}
-	// }
 }
 
 void ATurnBasedCharactor::OnUnSelected(APlayerController* PlayerController)
@@ -183,4 +177,33 @@ void ATurnBasedCharactor::OnUnSelected(APlayerController* PlayerController)
 	// 	// 	UE_LOG(LogTemp, Warning, TEXT("UnSelected and RemoveBinding %d"), bRemoveBindingByHandle);
 	// 	// }
 	// }
+}
+
+void ATurnBasedCharactor::UpdatePathIndicator()
+{
+	class APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	ATurnBasedPlayerController* TurnBasedPlayerController = Cast<ATurnBasedPlayerController>(PlayerController);
+	if (TurnBasedPlayerController == nullptr)
+	{
+		return;
+	}
+	FVector CursorLocation;
+	TurnBasedPlayerController->GetCursorLocation(CursorLocation);
+	auto NavV1 = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+	UNavigationPath* Path = NavV1->FindPathToLocationSynchronously(this, GetActorLocation(), CursorLocation);
+	if (Path == nullptr)
+	{
+		return;
+	}
+	// PathIndicatorComponent->
+}
+
+void ATurnBasedCharactor::ShowNiagaraPath()
+{
+	UNiagaraComponent* SpawnSystemAttached = UNiagaraFunctionLibrary::SpawnSystemAttached(
+		PathIndicator.LoadSynchronous(), GetRootComponent(), NAME_None,
+		FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::Type::SnapToTargetIncludingScale, false, true);
+	//todo update path every 0.01s
+	GetWorld()->GetTimerManager().SetTimer(UpdatePathTimerHandle, this, &ATurnBasedCharactor::UpdatePathIndicator,
+	                                       0.01f, true);
 }

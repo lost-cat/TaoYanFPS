@@ -4,12 +4,12 @@
 #include "TurnBasedAIController.h"
 
 #include "EnhancedInputComponent.h"
+#include "NavigationSystem.h"
 #include "TurnBasedCharacterBase.h"
 #include "TurnBasedCharactor.h"
 #include "TurnBasedEnemy.h"
 #include "TurnBasedPlayerController.h"
 #include "Kismet/GameplayStatics.h"
-#include "NavFilters/NavigationQueryFilter.h"
 #include "Navigation/PathFollowingComponent.h"
 
 
@@ -18,7 +18,9 @@ void ATurnBasedAIController::BeginPlay()
 	Super::BeginPlay();
 	if (const auto PlayerController = Cast<ATurnBasedPlayerController>(UGameplayStatics::GetPlayerController(this, 0)))
 	{
-		auto EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerController->InputComponent);
+		// check(PawnMoveAction)
+		// check(AttackAction)
+		const auto EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerController->InputComponent);
 		EnhancedInputComponent->BindAction(PawnMoveAction.LoadSynchronous(), ETriggerEvent::Completed, this,
 		                                   &ATurnBasedAIController::MovetoCursor);
 		EnhancedInputComponent->BindAction(AttackAction.LoadSynchronous(), ETriggerEvent::Completed, this,
@@ -38,7 +40,7 @@ void ATurnBasedAIController::OnMoveCompleted(FAIRequestID RequestID, const FPath
 		{
 			return;
 		}
-		
+
 		TurnBasedCharactor->Attack(Cast<ATurnBasedCharacterBase>(TargetActor));
 
 		// reset the attack request
@@ -47,45 +49,86 @@ void ATurnBasedAIController::OnMoveCompleted(FAIRequestID RequestID, const FPath
 	}
 }
 
-FPathFollowingRequestResult ATurnBasedAIController::MoveToActorIfIdle(const AActor* Goal, const float AcceptanceRadius,
-                                                                      const bool bStopOnOverlap,
-                                                                      const bool bUsePathfinding, const bool bCanStrafe,
-                                                                      const TSubclassOf<UNavigationQueryFilter>&
-                                                                      FilterClass,
-                                                                      const bool bAllowPartialPaths)
+FPathFollowingRequestResult ATurnBasedAIController::MoveToActorWithMaxDistanceLimits(
+	const AActor* Goal, FNavPathSharedPtr& Path,
+	float MaxDistanceLimit, float AcceptanceRadius)
 {
+	FPathFollowingRequestResult Result;
 	auto PathFollowingComponent_ = GetPathFollowingComponent();
 	// abort active movement to keep only one request running
 	if (PathFollowingComponent_ && PathFollowingComponent_->GetStatus() != EPathFollowingStatus::Idle)
 	{
-		return FPathFollowingRequestResult{};
+		return Result;
 	}
 
-	FAIMoveRequest MoveReq(Goal);
-	MoveReq.SetUsePathfinding(bUsePathfinding);
-	MoveReq.SetAllowPartialPath(bAllowPartialPaths);
-	MoveReq.SetNavigationFilter(*FilterClass ? FilterClass : DefaultNavigationFilterClass);
-	MoveReq.SetAcceptanceRadius(AcceptanceRadius);
-	MoveReq.SetReachTestIncludesAgentRadius(bStopOnOverlap);
-	MoveReq.SetCanStrafe(bCanStrafe);
+	FAIMoveRequest MoveReq{Goal};
+	MoveReq.SetUsePathfinding(true)
+	       .SetAllowPartialPath(true)
+	       .SetNavigationFilter(DefaultNavigationFilterClass)
+	       .SetAcceptanceRadius(AcceptanceRadius).SetReachTestIncludesAgentRadius(true)
+	       .SetCanStrafe(true);
 
-
-	return MoveTo(MoveReq);
+	if (!TestCanMoveToTargetWithDistanceLimits(MoveReq, MaxDistanceLimit, Path))
+	{
+		return Result;
+	};
+	Result = MoveTo(MoveReq, &Path);
+	return Result;
 }
+
+FPathFollowingRequestResult ATurnBasedAIController::MoveToLocationWithMaxDistanceLimits(const FVector& Goal,
+	FNavPathSharedPtr& Path, float MaxDistanceLimit, float AcceptanceRadius)
+{
+	FPathFollowingRequestResult Result;
+	FAIMoveRequest MoveReq;
+	auto PathFollowingComponent_ = GetPathFollowingComponent();
+	// abort active movement to keep only one request running
+	if (PathFollowingComponent_ && PathFollowingComponent_->GetStatus() != EPathFollowingStatus::Idle)
+	{
+		return Result;
+	}
+
+	MoveReq.SetGoalLocation(Goal);
+	MoveReq.SetUsePathfinding(true)
+	       .SetAllowPartialPath(true)
+	       .SetNavigationFilter(DefaultNavigationFilterClass)
+	       .SetAcceptanceRadius(AcceptanceRadius)
+	       .SetReachTestIncludesAgentRadius(true)
+	       .SetCanStrafe(true);
+
+	FPathFindingQuery PFQuery;
+
+	if (!TestCanMoveToTargetWithDistanceLimits(MoveReq, MaxDistanceLimit, Path))
+	{
+		return Result;
+	};
+
+	Result = MoveTo(MoveReq, &Path);
+	return Result;
+}
+
 
 void ATurnBasedAIController::MovetoCursor()
 {
-	const auto Pawn_ = GetPawn<ATurnBasedCharacterBase>();
-	if (Pawn_ == nullptr)
-	{
-		return;
-	}
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
 	ATurnBasedPlayerController* TurnBasedPlayerController = Cast<ATurnBasedPlayerController>(PlayerController);
 	if (TurnBasedPlayerController == nullptr)
 	{
 		return;
 	}
+	if (!IsCurrentPawnSelected(TurnBasedPlayerController))
+	{
+		// UE_LOG(LogTemp, Warning, TEXT("Pawn is not selected"));
+
+		return;
+	}
+
+	const auto Pawn_ = GetPawn<ATurnBasedCharacterBase>();
+	if (Pawn_ == nullptr)
+	{
+		return;
+	}
+
 	if (const auto HoverActor = TurnBasedPlayerController->GetHoverActor(); HoverActor && HoverActor->IsA<
 		ATurnBasedCharacterBase>())
 	{
@@ -100,7 +143,9 @@ void ATurnBasedAIController::MovetoCursor()
 			UE_LOG(LogPathFollowing, Warning, TEXT("Pawn %s is Moving"), *Pawn_->GetName());
 			return;
 		}
-		MoveToLocation(CursorLocation);
+
+		FNavPathSharedPtr Path = MakeShared<FNavigationPath>();
+		auto RequestResult = MoveToLocationWithMaxDistanceLimits(CursorLocation, Path, Pawn_->GetMaxDistancePerTurn());
 	}
 }
 
@@ -112,16 +157,28 @@ void ATurnBasedAIController::AttackPawnUnderCursor()
 	{
 		return;
 	}
-	const auto HoverActor = TurnBasedPlayerController->GetHoverActor();
-	if (HoverActor == nullptr || !HoverActor->IsA<ATurnBasedEnemy>()) // no target actor  under cursor or not enemy
+	const auto Pawn_ = GetPawn<ATurnBasedCharacterBase>();
+	if (Pawn_ == nullptr)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Directly attack"));
-
 		return;
 	}
 
+	if (!IsCurrentPawnSelected(TurnBasedPlayerController))
+	// the pawn this AI controller controls is not selected by player
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Pawn is not selected"));
+		return;
+	}
 
-	FPathFollowingRequestResult Result = MoveToActorIfIdle(HoverActor);
+	const auto HoverActor = TurnBasedPlayerController->GetHoverActor();
+	if (HoverActor == nullptr || !HoverActor->IsA<ATurnBasedEnemy>()) // no target actor  under cursor or not enemy
+	{
+		return;
+	}
+
+	FNavPathSharedPtr Path = MakeShared<FNavigationPath>();
+	const FPathFollowingRequestResult Result = MoveToActorWithMaxDistanceLimits(HoverActor, Path,
+		Pawn_->GetMaxDistancePerTurn());
 
 
 	if (Result.Code == EPathFollowingRequestResult::AlreadyAtGoal)
@@ -138,10 +195,46 @@ void ATurnBasedAIController::AttackPawnUnderCursor()
 		}
 		UE_LOG(LogTemp, Log, TEXT("Move to attack"));
 		//Attack after move to the target
-		AttackMoveRequestID = Result;
+		AttackMoveRequestID = Result.MoveId;
 		ActorToAttack = HoverActor;
 	}
+}
 
+bool ATurnBasedAIController::IsCurrentPawnSelected(const ATurnBasedPlayerController* PlayerController) const
+{
+	if (PlayerController == nullptr)
+	{
+		return false;
+	}
 
-	// MoveToActorAndAttack(HoverActor);
+	// if the pawn this AI controller controls is not selected by player , then do not move
+	return PlayerController->GetSelectedPawn() ? PlayerController->GetSelectedPawn() == GetPawn() : false;
+}
+
+bool ATurnBasedAIController::TestCanMoveToTargetWithDistanceLimits(const FAIMoveRequest& Request,
+                                                                   const float MaxDistanceLimit,
+                                                                   FNavPathSharedPtr& OutPath) const
+{
+	FPathFindingQuery PFQuery;
+	bool bQuery = BuildPathfindingQuery(Request, PFQuery);
+	if (!bQuery)
+	{
+		return false; // can't find the navi data.
+	}
+	auto NavV1 = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+	const FPathFindingResult FindingResult = NavV1->FindPathSync(PFQuery);
+	if (FindingResult.Result != ENavigationQueryResult::Type::Success)
+	{
+		return false; // can not find path
+	}
+
+	if (const auto Length = FindingResult.Path->GetLength(); Length > MaxDistanceLimit)
+	{
+		UE_LOG(LogTemp, Warning,
+		       TEXT(
+			       "Can not move to target with distance limits current cost distance is %f,but the max distance limit is %f"
+		       ), Length, MaxDistanceLimit);
+		return false;
+	}
+	return true;
 }
