@@ -11,10 +11,10 @@
 ATurnBasedCharacterBase::ATurnBasedCharacterBase()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	static ConstructorHelpers::FClassFinder<UTurnBasedCharacterHealthBar> HealthBarClassFinder(
-		TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/SLGContent/UI/BP_CharacterHealthBar.BP_CharacterHealthBar_C'"));
+		TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/SLGContent/UI/UI_CharacterHealthBar.UI_CharacterHealthBar_C'"));
 	HealthBarClass = HealthBarClassFinder.Class;
 	HealthBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBar"));
 	HealthBar->SetupAttachment(GetRootComponent());
@@ -34,17 +34,16 @@ void ATurnBasedCharacterBase::BeginPlay()
 	OnHealthChanged.Broadcast(Health / MaxHealth);
 }
 
-// Called every frame
-void ATurnBasedCharacterBase::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
 
 void ATurnBasedCharacterBase::OnSelected(APlayerController* PlayerController)
 {
 }
 
 void ATurnBasedCharacterBase::OnUnSelected(APlayerController* PlayerController)
+{
+}
+
+void ATurnBasedCharacterBase::StandBy()
 {
 }
 
@@ -56,6 +55,7 @@ void ATurnBasedCharacterBase::Attack(ATurnBasedCharacterBase* Target)
 		UE_LOG(LogHAL, Error, TEXT("Attack Target is nullptr"));
 		return;
 	}
+	AttackCount--;
 	Target->OnAttacked(this);
 }
 
@@ -63,4 +63,11 @@ void ATurnBasedCharacterBase::OnAttacked(ATurnBasedCharacterBase* Attacker)
 {
 	this->Health -= 10.0f;
 	OnHealthChanged.Broadcast(Health / MaxHealth);
+}
+
+void ATurnBasedCharacterBase::ResetTurnRelatedState()
+{
+	AttackCount = 1;
+	MoveCount = 1;
+	bActionable = true;
 }

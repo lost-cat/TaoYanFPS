@@ -3,9 +3,11 @@
 
 #include "TurnBasedCharactor.h"
 
+#include "CharacterActionContentWidget.h"
 #include "NavigationPath.h"
 #include "NavigationSystem.h"
 #include "NiagaraComponent.h"
+#include "NiagaraDataInterfaceArrayFunctionLibrary.h"
 #include "NiagaraFunctionLibrary.h"
 #include "TurnBasedAIController.h"
 #include "TurnBasedEnemy.h"
@@ -17,13 +19,18 @@
 ATurnBasedCharactor::ATurnBasedCharactor()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
+	// ActionContentComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("ActionContentWidget"));
+	// ActionContentComponent->SetupAttachment(GetRootComponent());
+	// ActionContentComponent->SetWidgetSpace(EWidgetSpace::Screen);
+	// ActionContentComponent->SetDrawAtDesiredSize(true);
 }
 
 // Called when the game starts or when spawned
 void ATurnBasedCharactor::BeginPlay()
 {
 	Super::BeginPlay();
+	
 }
 
 // Called every frame
@@ -132,58 +139,51 @@ void ATurnBasedCharactor::Attack(ATurnBasedCharacterBase* Target)
 {
 	Super::Attack(Target);
 	UE_LOG(LogTemp, Display, TEXT("Attack %s"), *Target->GetName());
-	// const auto TurnBasedAIController = GetController<ATurnBasedAIController>();
-	// if (TurnBasedAIController == nullptr)
-	// {
-	// 	return;
-	// }
-	// TurnBasedAIController->GetPathFollowingComponent()->OnRequestFinished.Remove(AttackDelegateHandle);
 }
-
-// void ATurnBasedCharactor::AttackPawnUnderCursor()
-// {
-// 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
-// 	const auto TurnBasedPlayerController = Cast<ATurnBasedPlayerController>(PlayerController);
-// 	if (TurnBasedPlayerController == nullptr) // not player controller
-// 	{
-// 		return;
-// 	}
-// 	const auto HoverActor = TurnBasedPlayerController->GetHoverActor();
-// 	if (HoverActor == nullptr || !HoverActor->IsA<ATurnBasedEnemy>()) // no target actor  under cursor or not enemy
-// 	{
-// 		return;
-// 	}
-//
-// 	// MoveToActorAndAttack(HoverActor);
-// }
 
 
 void ATurnBasedCharactor::OnSelected(APlayerController* PlayerController)
 {
 	Super::OnSelected(PlayerController);
 	UE_LOG(LogTemp, Display, TEXT("OnSelected Pawn: %s"), *GetName());
+
+	if (const ATurnBasedPlayerController* TurnBasedPlayerController = Cast<ATurnBasedPlayerController>(PlayerController))
+	{
+		OnMoveCompleted.AddUniqueDynamic(TurnBasedPlayerController->GetCharacterActionContentWidget(),
+									  &UCharacterActionContentWidget::OnCorrespondCharacterMoveCompleted);
+	}
+	
 }
 
 void ATurnBasedCharactor::OnUnSelected(APlayerController* PlayerController)
 {
 	Super::OnUnSelected(PlayerController);
-	// if (PlayerController)
-	// {
-	// 	// if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(
-	// 	// 	PlayerController->InputComponent))
-	// 	// {
-	// 	// 	bool bRemoveBindingByHandle = EnhancedInputComponent->RemoveBindingByHandle(PawnMoveInputActionHandle);
-	// 	//
-	// 	// 	UE_LOG(LogTemp, Warning, TEXT("UnSelected and RemoveBinding %d"), bRemoveBindingByHandle);
-	// 	// }
-	// }
+	
+	if (const ATurnBasedPlayerController* TurnBasedPlayerController = Cast<ATurnBasedPlayerController>(PlayerController))
+	{
+		OnMoveCompleted.RemoveDynamic(TurnBasedPlayerController->GetCharacterActionContentWidget(),
+									  &UCharacterActionContentWidget::OnCorrespondCharacterMoveCompleted);
+	}
+}
+
+void ATurnBasedCharactor::StandBy()
+{
+	SetActionable(false);
+	// APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	// ATurnBasedPlayerController* TurnBasedPlayerController = Cast<ATurnBasedPlayerController>(PlayerController);
+}
+
+void ATurnBasedCharactor::ResetTurnRelatedState()
+{
+	Super::ResetTurnRelatedState();
+	
 }
 
 void ATurnBasedCharactor::UpdatePathIndicator()
 {
 	class APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
 	ATurnBasedPlayerController* TurnBasedPlayerController = Cast<ATurnBasedPlayerController>(PlayerController);
-	if (TurnBasedPlayerController == nullptr)
+	if (TurnBasedPlayerController == nullptr || PathIndicatorComponent == nullptr)
 	{
 		return;
 	}
@@ -195,15 +195,40 @@ void ATurnBasedCharactor::UpdatePathIndicator()
 	{
 		return;
 	}
+	UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(PathIndicatorComponent,TEXT("TargetPath"),
+	                                                                 Path->PathPoints);
 	// PathIndicatorComponent->
 }
 
 void ATurnBasedCharactor::ShowNiagaraPath()
 {
-	UNiagaraComponent* SpawnSystemAttached = UNiagaraFunctionLibrary::SpawnSystemAttached(
+	if (PathIndicatorComponent != nullptr) // first time init path indicator
+	{
+		PathIndicatorComponent->DestroyComponent();
+		PathIndicatorComponent = nullptr;
+	}
+	PathIndicatorComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
 		PathIndicator.LoadSynchronous(), GetRootComponent(), NAME_None,
 		FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::Type::SnapToTargetIncludingScale, false, true);
-	//todo update path every 0.01s
-	GetWorld()->GetTimerManager().SetTimer(UpdatePathTimerHandle, this, &ATurnBasedCharactor::UpdatePathIndicator,
-	                                       0.01f, true);
+
+	if (UpdatePathTimerHandle.IsValid())
+	{
+		GetWorld()->GetTimerManager().UnPauseTimer(UpdatePathTimerHandle);
+	}
+	else
+	{
+		GetWorld()->GetTimerManager().SetTimer(UpdatePathTimerHandle, this, &ATurnBasedCharactor::UpdatePathIndicator,
+		                                       0.01f, FTimerManagerTimerParameters{true, true});
+	}
+}
+
+void ATurnBasedCharactor::HideNiagaraPath()
+{
+	if (PathIndicatorComponent)
+	{
+		// PathIndicatorComponent->Deactivate();
+		PathIndicatorComponent->DestroyComponent();
+		PathIndicatorComponent = nullptr;
+		GetWorld()->GetTimerManager().PauseTimer(UpdatePathTimerHandle);
+	}
 }

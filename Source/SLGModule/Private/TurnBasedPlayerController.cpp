@@ -3,12 +3,42 @@
 
 #include "TurnBasedPlayerController.h"
 
+#include "CharacterActionContentWidget.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
+#include "SLGMainWidget.h"
 #include "TurnBasedCharactor.h"
 #include "TurnBasedPlayerPawn.h"
 #include  "TurnBasedCharacterBase.h"
+#include "Blueprint/UserWidget.h"
+#include "Blueprint/WidgetTree.h"
+
+void ATurnBasedPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+
+	BindInputMapping(BaseMovingInputMappingContext, 0);
+
+	MainWidget = Cast<USLGMainWidget>(
+		CreateWidget(this, UIMainClass.LoadSynchronous(), TEXT("MainWidget")));
+	if (!MainWidget)
+	{
+		return;
+	}
+	MainWidget->AddToViewport();
+	CharacterActionContentWidget = MainWidget->GetCharacterActionsWidget();
+	if (CharacterActionContentWidget)
+	{
+		// CharacterActionContentWidget->AddToViewport();
+		CharacterActionContentWidget->SetVisibility(ESlateVisibility::Hidden);
+	}
+	OnSelectedDelegate.AddUniqueDynamic(CharacterActionContentWidget,
+	                                    &UCharacterActionContentWidget::SetCorrespondCharacter);
+	OnUnSelectedDelegate.AddUniqueDynamic(CharacterActionContentWidget,
+	                                      &UCharacterActionContentWidget::OnPlayerUnSelected);
+}
 
 ATurnBasedPlayerController::ATurnBasedPlayerController()
 {
@@ -17,10 +47,21 @@ ATurnBasedPlayerController::ATurnBasedPlayerController()
 
 void ATurnBasedPlayerController::SetSelectedPawn(ATurnBasedCharactor* Charactor)
 {
+	if (SelectedPawn != nullptr)
+	{
+		UnSelect();
+	}
 	SelectedPawn = Charactor;
 	Charactor->OnSelected(this);
+	OnSelectedDelegate.Broadcast(SelectedPawn);
+}
 
-	BindInputMapping(PawnOperationInputMappingContext, 1);
+void ATurnBasedPlayerController::UnSelect()
+{
+	SelectedPawn->OnUnSelected(this);
+	OnUnSelectedDelegate.Broadcast(SelectedPawn);
+
+	SelectedPawn = nullptr;
 }
 
 APawn* ATurnBasedPlayerController::GetSelectedPawn() const
@@ -52,41 +93,6 @@ void ATurnBasedPlayerController::AppendControlledPawn(ATurnBasedCharacterBase* P
 		return;
 	}
 	ControlledPawns.Add(PlayerCharacter);
-}
-
-void ATurnBasedPlayerController::UnSelect()
-{
-	SelectedPawn->OnUnSelected(this);
-	SelectedPawn = nullptr;
-	if (const ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(Player))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Remove Mapping Context: %s"), *PawnOperationInputMappingContext.GetAssetName());
-		const auto EnhancedInputPlayerSubsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
-		EnhancedInputPlayerSubsystem->RemoveMappingContext(PawnOperationInputMappingContext.LoadSynchronous());
-	}
-}
-
-
-void ATurnBasedPlayerController::BindInputMapping(const TSoftObjectPtr<UInputMappingContext>& InputMappingContext,
-                                                  int32 Priority = 0)
-{
-	if (ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(Player))
-	{
-		auto EnhancedInputPlayerSubsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
-		if (!BaseMovingInputMappingContext.IsNull())
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Add Mapping Context: %s"), *InputMappingContext.GetAssetName());
-			EnhancedInputPlayerSubsystem->AddMappingContext(InputMappingContext.LoadSynchronous(), Priority);
-		}
-	}
-}
-
-void ATurnBasedPlayerController::BeginPlay()
-{
-	Super::BeginPlay();
-
-
-	BindInputMapping(BaseMovingInputMappingContext);
 }
 
 
@@ -124,5 +130,46 @@ void ATurnBasedPlayerController::SetupInputComponent()
 		UE_LOG(LogTemp, Warning, TEXT("Bind Select Pawn Action"));
 		EnhancedInputComponent->BindAction(SelectPawnAction.LoadSynchronous(), ETriggerEvent::Completed, this,
 		                                   &ATurnBasedPlayerController::SelectPawn);
+	}
+}
+
+
+void ATurnBasedPlayerController::BindInputMapping(const TSoftObjectPtr<UInputMappingContext>& InputMappingContext,
+                                                  int32 Priority = 0)
+{
+	if (ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(Player))
+	{
+		auto EnhancedInputPlayerSubsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+		if (!BaseMovingInputMappingContext.IsNull())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Add Mapping Context: %s"), *InputMappingContext.GetAssetName());
+			EnhancedInputPlayerSubsystem->AddMappingContext(InputMappingContext.LoadSynchronous(), Priority);
+		}
+	}
+}
+
+void ATurnBasedPlayerController::RemoveInputMapping(const TSoftObjectPtr<UInputMappingContext>& InputMappingContext)
+{
+	if (const ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(Player))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Remove Mapping Context: %s"), *InputMappingContext.GetAssetName());
+		const auto EnhancedInputPlayerSubsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+		EnhancedInputPlayerSubsystem->RemoveMappingContext(InputMappingContext.LoadSynchronous());
+	}
+}
+
+void ATurnBasedPlayerController::OnTurnForwarded(const FTurn& NextTurn)
+{
+	if (NextTurn.TurnType == ETurnType::PlayerTurn)
+	{
+		ResetAllControlledPawnStates();
+	}
+}
+
+void ATurnBasedPlayerController::ResetAllControlledPawnStates()
+{
+	for (ATurnBasedCharacterBase* Pawn_ : ControlledPawns)
+	{
+		Pawn_->ResetTurnRelatedState();
 	}
 }

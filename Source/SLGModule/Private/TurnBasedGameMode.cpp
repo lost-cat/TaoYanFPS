@@ -26,28 +26,34 @@ void ATurnBasedGameMode::ForwardTurn(ETurnType NextTurnType = ETurnType::PlayerT
 	if (TurnRecords.Num() == 0)
 	{
 		FTurn FirstTurn;
-		FirstTurn.TurnIndex = 0;
+		FirstTurn.TurnIndex = 1;
 		FirstTurn.TurnType = ETurnType::PlayerTurn;
 		TurnRecords.Add(FirstTurn);
+		OnTurnForwarded.Broadcast(FirstTurn);
 	}
 	else
 	{
 		const auto [TurnIndex, TurnType] = TurnRecords.Last();
-		FTurn NextTurn{TurnIndex + 1, NextTurnType};
-		TurnRecords.Emplace(NextTurn);
-		
+		const FTurn NextTurn{TurnIndex + 1, NextTurnType};
+		TurnRecords.Add(NextTurn);
+		OnTurnForwarded.Broadcast(NextTurn);
 	}
-
 }
 
 void ATurnBasedGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	const auto PlayerController = Cast<ATurnBasedPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
+	OnTurnForwarded.AddUniqueDynamic(PlayerController, &ATurnBasedPlayerController::OnTurnForwarded);
+	
 	ATurnBasedCharacterBase* PlayerCharacter0 = SpawnCharacterAtLocation(PlayerCharacterClass, FVector(0, 130, 88));
 	ATurnBasedCharacterBase* PlayerCharacter1 = SpawnCharacterAtLocation(PlayerCharacterClass, FVector(0, 130, 88));
-	auto PlayerController = Cast<ATurnBasedPlayerController>(UGameplayStatics::GetPlayerController(this,0));
+
 	PlayerController->AppendControlledPawn(PlayerCharacter0);
 	PlayerController->AppendControlledPawn(PlayerCharacter1);
+
+	ForwardTurn();
 }
 
 ATurnBasedCharacterBase* ATurnBasedGameMode::SpawnCharacterAtLocation(
@@ -63,7 +69,9 @@ ATurnBasedCharacterBase* ATurnBasedGameMode::SpawnCharacterAtLocation(
 	{
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-		ATurnBasedCharacterBase* SpawnActor = World->SpawnActor<ATurnBasedCharacterBase>(CharacterClass, Location, FRotator::ZeroRotator, SpawnParams);
+		ATurnBasedCharacterBase* SpawnActor = World->SpawnActor<ATurnBasedCharacterBase>(
+			CharacterClass, Location, FRotator::ZeroRotator, SpawnParams);
+
 		return SpawnActor;
 	}
 	return nullptr;

@@ -20,8 +20,6 @@ public:
 	ATurnBasedCharacterBase();
 
 
-	float GetMaxDistancePerTurn() const { return MaxDistancePerTurn; }
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Widget")
 	TObjectPtr<UWidgetComponent> HealthBar;
 
@@ -35,13 +33,43 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	//Begin GETTER & SETTER
+	FORCEINLINE bool IsActionable() const { return bActionable; }
+	FORCEINLINE void SetActionable(const bool InbActionable)
+	{
+		this->bActionable = InbActionable;
+	}
+
+	FORCEINLINE float GetMaxDistancePerTurn() const { return MaxDistancePerTurn; }
+	FORCEINLINE void SetMaxDistancePerTurn(const float InMaxDistancePerTurn)
+	{
+		this->MaxDistancePerTurn = InMaxDistancePerTurn;
+	}
+
+	FORCEINLINE int GetMoveCount() const { return MoveCount; }
+	FORCEINLINE void SetMoveCount(const int InMoveCount)
+	{
+		this->MoveCount = InMoveCount;
+	}
+
+	FORCEINLINE int GetAttackCount() const { return AttackCount; }
+	FORCEINLINE void SetAttackCount(const int InAttackCount)
+	{
+		this->AttackCount = InAttackCount;
+	}
+
+	//End GETTER & SETTER
+
+
+	FORCEINLINE bool CanMove() const { return bActionable && MoveCount > 0; }
+	FORCEINLINE bool CanAttack() const { return bActionable && AttackCount > 0; }
 
 	virtual void OnSelected(APlayerController* PlayerController);
 	virtual void OnUnSelected(APlayerController* PlayerController);
+	virtual void StandBy();
 	virtual void Attack(ATurnBasedCharacterBase* Target);
 	virtual void OnAttacked(ATurnBasedCharacterBase* Attacker);
+	virtual void ResetTurnRelatedState();
 
 private:
 	float Health = 100.0f;
@@ -52,6 +80,10 @@ private:
 
 	float Speed;
 	float MaxDistancePerTurn = 500.0f;
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="TurnRelatedState", meta=(AllowPrivateAccess="true"))
 	bool bActionable = true;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="TurnRelatedState", meta=(AllowPrivateAccess="true"))
+	int MoveCount = 1;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="TurnRelatedState", meta=(AllowPrivateAccess="true"))
+	int AttackCount = 1;
 };

@@ -29,6 +29,9 @@ struct FTurn
 	ETurnType TurnType;
 };
 
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTurnChanged, const FTurn&, NextTurn);
+
 UCLASS()
 class SLGMODULE_API ATurnBasedGameMode : public AGameModeBase
 {
@@ -42,6 +45,8 @@ public:
 
 	ATurnBasedCharacterBase* SpawnCharacterAtLocation(const TSubclassOf<ATurnBasedCharacterBase>& CharacterClass,
 	                                                  const FVector& Location);
+
+	FOnTurnChanged OnTurnForwarded;
 
 protected:
 	virtual void BeginPlay() override;
@@ -57,5 +62,3 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=GamePlay, meta=(AllowPrivateAccess="true"))
 	TSubclassOf<ATurnBasedCharacterBase> EnemyCharacterClass;
 };
-
-

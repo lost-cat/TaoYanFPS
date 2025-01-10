@@ -55,4 +55,6 @@ private:
 private:
 	FAIRequestID AttackMoveRequestID = FAIRequestID::InvalidRequest;
 	AActor* ActorToAttack = nullptr;
+
+	ATurnBasedPlayerController* TurnBasedPlayerController = nullptr;
 };

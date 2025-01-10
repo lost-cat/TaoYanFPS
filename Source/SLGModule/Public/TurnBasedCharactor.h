@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AIController.h"
 #include "TurnBasedCharacterBase.h"
 #include "TurnBasedCharactor.generated.h"
 
@@ -12,16 +13,18 @@ class ATurnBasedPlayerController;
 class UWidgetComponent;
 class UInputAction;
 
+
+
 UCLASS()
 class SLGMODULE_API ATurnBasedCharactor : public ATurnBasedCharacterBase
 {
 	GENERATED_BODY()
 
-public:
 	// Sets default values for this character's properties
 	ATurnBasedCharactor();
 
-	TObjectPtr<UNiagaraComponent> PathIndicatorComponent;
+public:
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -34,21 +37,33 @@ public:
 	UFUNCTION()
 	void ShowOperationContents();
 
+
 	UFUNCTION()
 	void MoveToLocation(const FVector& TargetLocation);
 	virtual void Attack(ATurnBasedCharacterBase* Target) override;
 
 	virtual void OnSelected(APlayerController* PlayerController) override;
 	virtual void OnUnSelected(APlayerController* PlayerController) override;
+	virtual void StandBy() override;
+	virtual void ResetTurnRelatedState() override;
+	void ShowNiagaraPath();
+	void HideNiagaraPath();
 
 private:
 	void UpdatePathIndicator();
-	void ShowNiagaraPath();
+
+
+
+public:
+	FAIMoveCompletedSignature OnMoveCompleted;
+
 
 private:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,Category="Effects", meta=(AllowPrivateAccess="true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Effects", meta=(AllowPrivateAccess="true"))
 	TSoftObjectPtr<UNiagaraSystem> PathIndicator;
 
+	TObjectPtr<UNiagaraComponent> PathIndicatorComponent;
+	
 	uint32 PawnMoveInputActionHandle = -1;
 	uint32 AttackInputActionHandle = -1;
 	FTimerHandle UpdatePathTimerHandle;
