@@ -86,14 +86,7 @@ bool ATurnBasedPlayerController::GetCursorLocation(FVector& OutLocation) const
 	return false;
 }
 
-void ATurnBasedPlayerController::AppendControlledPawn(ATurnBasedCharacterBase* PlayerCharacter)
-{
-	if (PlayerCharacter == nullptr)
-	{
-		return;
-	}
-	ControlledPawns.Add(PlayerCharacter);
-}
+
 
 
 void ATurnBasedPlayerController::SelectPawn(const FInputActionValue& InputActionValue)
@@ -162,14 +155,11 @@ void ATurnBasedPlayerController::OnTurnForwarded(const FTurn& NextTurn)
 {
 	if (NextTurn.TurnType == ETurnType::PlayerTurn)
 	{
-		ResetAllControlledPawnStates();
+		EnableInput(this);
+	}
+	else if (NextTurn.TurnType == ETurnType::EnemyTurn)
+	{
+		DisableInput(this);
 	}
 }
 
-void ATurnBasedPlayerController::ResetAllControlledPawnStates()
-{
-	for (ATurnBasedCharacterBase* Pawn_ : ControlledPawns)
-	{
-		Pawn_->ResetTurnRelatedState();
-	}
-}

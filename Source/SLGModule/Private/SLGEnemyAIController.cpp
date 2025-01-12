@@ -2,4 +2,10 @@
 
 
 #include "SLGEnemyAIController.h"
+#include "BehaviorTree/BehaviorTree.h"
 
+void ASLGEnemyAIController::BeginPlay()
+{
+	Super::BeginPlay();
+	RunBehaviorTree(EnemyBTAsset.LoadSynchronous());
+}

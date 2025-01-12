@@ -37,8 +37,7 @@ public:
 	{
 		return CharacterActionContentWidget;
 	}
-
-	void AppendControlledPawn(ATurnBasedCharacterBase* PlayerCharacter);
+	
 	void BindInputMapping(const TSoftObjectPtr<UInputMappingContext>& InputMappingContext, int32 Priority);
 	void RemoveInputMapping(const TSoftObjectPtr<UInputMappingContext>& InputMappingContext);
 	UFUNCTION()
@@ -51,7 +50,7 @@ protected:
 	virtual void SetupInputComponent() override;
 
 private:
-	void  ResetAllControlledPawnStates();
+	
 
 public:
 
@@ -76,7 +75,7 @@ public:
 
 private:
 	TObjectPtr<ATurnBasedCharacterBase> SelectedPawn;
-	TArray<ATurnBasedCharacterBase*> ControlledPawns;
+	
 	TObjectPtr<UCharacterActionContentWidget> CharacterActionContentWidget;
 	TObjectPtr<USLGMainWidget>MainWidget;
 };

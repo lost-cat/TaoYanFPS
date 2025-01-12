@@ -13,6 +13,7 @@
 
 class ATurnBasedCharacterBase;
 
+UENUM()
 enum class ETurnType: uint8
 {
 	PlayerTurn,
@@ -41,20 +42,32 @@ class SLGMODULE_API ATurnBasedGameMode : public AGameModeBase
 
 public:
 	FTurn GetCurrentTurn() const;
+
 	void ForwardTurn(ETurnType NextTurnType);
 
 	ATurnBasedCharacterBase* SpawnCharacterAtLocation(const TSubclassOf<ATurnBasedCharacterBase>& CharacterClass,
 	                                                  const FVector& Location);
 
+	FORCEINLINE TArray<ATurnBasedCharacterBase*> GetPlayerControlledPawns() const { return ControlledPawns; }
 	FOnTurnChanged OnTurnForwarded;
 
 protected:
 	virtual void BeginPlay() override;
 
 private:
+	void ResetAllControlledPawnStates();
+	void ResetAllEnemyPawnStates();
+
+private:
 	TArray<FTurn> TurnRecords;
 	UPROPERTY()
 	TArray<ATurnBasedCharacterBase*> CharacterActionSequence;
+
+	UPROPERTY()
+	TArray<ATurnBasedCharacterBase*> ControlledPawns;
+
+	UPROPERTY()
+	TArray<ATurnBasedCharacterBase*> EnemyPawns;
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=GamePlay, meta=(AllowPrivateAccess="true"))

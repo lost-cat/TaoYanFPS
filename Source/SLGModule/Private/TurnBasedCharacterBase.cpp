@@ -45,6 +45,7 @@ void ATurnBasedCharacterBase::OnUnSelected(APlayerController* PlayerController)
 
 void ATurnBasedCharacterBase::StandBy()
 {
+	SetActionable(false);
 }
 
 
@@ -62,6 +63,11 @@ void ATurnBasedCharacterBase::Attack(ATurnBasedCharacterBase* Target)
 void ATurnBasedCharacterBase::OnAttacked(ATurnBasedCharacterBase* Attacker)
 {
 	this->Health -= 10.0f;
+	if (this->Health <= 0.0f)
+	{
+		this->Destroy();
+	}
+
 	OnHealthChanged.Broadcast(Health / MaxHealth);
 }
 

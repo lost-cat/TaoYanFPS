@@ -19,7 +19,6 @@ void USLGMainWidget::NativeOnInitialized()
 		TurnBasedGameMode->OnTurnForwarded.AddUniqueDynamic(this, &USLGMainWidget::UpdateTurns);
 		UpdateTurns(TurnBasedGameMode->GetCurrentTurn());
 	}
-	
 }
 
 
@@ -28,16 +27,25 @@ void USLGMainWidget::OnEndTurnButtonClicked()
 	if (ATurnBasedGameMode* TurnBasedGameMode = Cast<ATurnBasedGameMode>(UGameplayStatics::GetGameMode(this)))
 	{
 		UE_LOG(LogTemp, Log, TEXT("End Turn Button Clicked"));
-
-		TurnBasedGameMode->ForwardTurn(ETurnType::PlayerTurn);
+		switch (TurnBasedGameMode->GetCurrentTurn().TurnType)
+		{
+		case ETurnType::PlayerTurn:
+			TurnBasedGameMode->ForwardTurn(ETurnType::EnemyTurn);
+			break;
+		case ETurnType::EnemyTurn:
+			TurnBasedGameMode->ForwardTurn(ETurnType::PlayerTurn);
+			break;
+		default:
+			checkNoEntry();
+		}
+		
 	}
 }
 
-void USLGMainWidget::UpdateTurns(const FTurn& NextTurn) 
+void USLGMainWidget::UpdateTurns(const FTurn& NextTurn)
 {
 	int32 TurnIndex = NextTurn.TurnIndex;
 	FText TurnText = FText::FromString(FString::FromInt(TurnIndex));
 	Turns->SetText(TurnText);
 	FString TurnType = NextTurn.TurnType == ETurnType::PlayerTurn ? "Player" : "Enemy";
-	TEXT("asd");
 }

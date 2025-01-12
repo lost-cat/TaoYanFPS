@@ -18,6 +18,12 @@ public:
 	virtual void Attack(ATurnBasedCharacterBase* Target) override;
 	virtual void OnAttacked(ATurnBasedCharacterBase* Attacker) override;
 
+	void SetTarget(ATurnBasedCharacterBase* InTarget);
+	ATurnBasedCharacterBase* GetCurrentTarget() const;
+
+	bool FindSuitableTarget();
+
 private:
+	ATurnBasedCharacterBase* CurrentTarget;
 	GENERATED_BODY()
 };

@@ -168,7 +168,7 @@ void ATurnBasedCharactor::OnUnSelected(APlayerController* PlayerController)
 
 void ATurnBasedCharactor::StandBy()
 {
-	SetActionable(false);
+	Super::StandBy();
 	// APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
 	// ATurnBasedPlayerController* TurnBasedPlayerController = Cast<ATurnBasedPlayerController>(PlayerController);
 }

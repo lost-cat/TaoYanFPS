@@ -38,22 +38,51 @@ void ATurnBasedGameMode::ForwardTurn(ETurnType NextTurnType = ETurnType::PlayerT
 		TurnRecords.Add(NextTurn);
 		OnTurnForwarded.Broadcast(NextTurn);
 	}
+	if (NextTurnType == ETurnType::PlayerTurn)
+	{
+		ResetAllControlledPawnStates();
+	}
+	else if (NextTurnType == ETurnType::EnemyTurn)
+	{
+		ResetAllEnemyPawnStates();
+	}
 }
 
 void ATurnBasedGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	const auto PlayerController = Cast<ATurnBasedPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
 	OnTurnForwarded.AddUniqueDynamic(PlayerController, &ATurnBasedPlayerController::OnTurnForwarded);
-	
-	ATurnBasedCharacterBase* PlayerCharacter0 = SpawnCharacterAtLocation(PlayerCharacterClass, FVector(0, 130, 88));
-	ATurnBasedCharacterBase* PlayerCharacter1 = SpawnCharacterAtLocation(PlayerCharacterClass, FVector(0, 130, 88));
 
-	PlayerController->AppendControlledPawn(PlayerCharacter0);
-	PlayerController->AppendControlledPawn(PlayerCharacter1);
+	ATurnBasedCharacterBase* PlayerCharacter0 = SpawnCharacterAtLocation(PlayerCharacterClass, FVector(0, 130, 88));
+	ATurnBasedCharacterBase* PlayerCharacter1 = SpawnCharacterAtLocation(PlayerCharacterClass, FVector(100, 230, 88));
+	ControlledPawns.Add(PlayerCharacter0);
+	ControlledPawns.Add(PlayerCharacter1);
+	ATurnBasedCharacterBase* Enemy1 = SpawnCharacterAtLocation(EnemyCharacterClass, FVector(0, -130, 88));
+	ATurnBasedCharacterBase* Enemy2 = SpawnCharacterAtLocation(EnemyCharacterClass, FVector(0, -200, 88));
+	EnemyPawns.Add(Enemy1);
+	EnemyPawns.Add(Enemy2);
+
 
 	ForwardTurn();
+}
+
+
+void ATurnBasedGameMode::ResetAllControlledPawnStates()
+{
+	for (ATurnBasedCharacterBase* OurPawn : ControlledPawns)
+	{
+		OurPawn->ResetTurnRelatedState();
+	}
+}
+
+void ATurnBasedGameMode::ResetAllEnemyPawnStates()
+{
+	for (ATurnBasedCharacterBase* EnemyPawn : EnemyPawns)
+	{
+		EnemyPawn->ResetTurnRelatedState();
+	}
 }
 
 ATurnBasedCharacterBase* ATurnBasedGameMode::SpawnCharacterAtLocation(
