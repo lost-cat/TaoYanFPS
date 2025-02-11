@@ -3,7 +3,10 @@
 
 #include "TurnBasedGameMode.h"
 
+#include "NavigationSystem.h"
+#include "TurnBasedEnemy.h"
 #include "TurnBasedPlayerController.h"
+#include "AI/NavigationSystemBase.h"
 #include "Kismet/GameplayStatics.h"
 
 ATurnBasedGameMode::ATurnBasedGameMode()
@@ -21,7 +24,7 @@ FTurn ATurnBasedGameMode::GetCurrentTurn() const
 	return TurnRecords.Last();
 }
 
-void ATurnBasedGameMode::ForwardTurn(ETurnType NextTurnType = ETurnType::PlayerTurn)
+void ATurnBasedGameMode::ForwardTurn(ETurnType NextTurnType)
 {
 	if (TurnRecords.Num() == 0)
 	{
@@ -55,15 +58,14 @@ void ATurnBasedGameMode::BeginPlay()
 	const auto PlayerController = Cast<ATurnBasedPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
 	OnTurnForwarded.AddUniqueDynamic(PlayerController, &ATurnBasedPlayerController::OnTurnForwarded);
 
-	ATurnBasedCharacterBase* PlayerCharacter0 = SpawnCharacterAtLocation(PlayerCharacterClass, FVector(0, 130, 88));
+	ATurnBasedCharacterBase* PlayerCharacter0 = SpawnCharacterAtLocation(PlayerCharacterClass, FVector(0, 430, 88));
 	ATurnBasedCharacterBase* PlayerCharacter1 = SpawnCharacterAtLocation(PlayerCharacterClass, FVector(100, 230, 88));
 	ControlledPawns.Add(PlayerCharacter0);
 	ControlledPawns.Add(PlayerCharacter1);
-	ATurnBasedCharacterBase* Enemy1 = SpawnCharacterAtLocation(EnemyCharacterClass, FVector(0, -130, 88));
-	ATurnBasedCharacterBase* Enemy2 = SpawnCharacterAtLocation(EnemyCharacterClass, FVector(0, -200, 88));
+	ATurnBasedCharacterBase* Enemy1 = SpawnCharacterAtLocation(EnemyCharacterClass, FVector(0, -230, 88));
+	ATurnBasedCharacterBase* Enemy2 = SpawnCharacterAtLocation(EnemyCharacterClass, FVector(0, -100, 88));
 	EnemyPawns.Add(Enemy1);
 	EnemyPawns.Add(Enemy2);
-
 
 	ForwardTurn();
 }
@@ -83,6 +85,15 @@ void ATurnBasedGameMode::ResetAllEnemyPawnStates()
 	{
 		EnemyPawn->ResetTurnRelatedState();
 	}
+}
+
+ATurnBasedCharacterBase* ATurnBasedGameMode::GetNextFocusedEnemy()
+{
+	ATurnBasedCharacterBase** FindByPredicate = EnemyPawns.FindByPredicate([](ATurnBasedCharacterBase* EnemyPawn)
+	{
+		return EnemyPawn->IsActionable();
+	});
+	return FindByPredicate ? *FindByPredicate : nullptr;
 }
 
 ATurnBasedCharacterBase* ATurnBasedGameMode::SpawnCharacterAtLocation(

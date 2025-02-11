@@ -3,12 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayEffectTypes.h"
 #include "GameFramework/Character.h"
 #include "TurnBasedCharacterBase.generated.h"
 
+class UAttributeSet_CharacterBase;
+class USphereComponent;
+class UAbilitySystemComponent;
+class UNavModifierComponent;
 class UTurnBasedCharacterHealthBar;
 class UWidgetComponent;
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedSignature, float, NewValue);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAttributeChangedSignature, float, NewValue,float,OldValue);
 
 UCLASS()
 class SLGMODULE_API ATurnBasedCharacterBase : public ACharacter
@@ -16,17 +22,36 @@ class SLGMODULE_API ATurnBasedCharacterBase : public ACharacter
 	GENERATED_BODY()
 
 public:
+	UFUNCTION()
+	void OnPunchSphereOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
+	                               const FHitResult& SweepResult);
 	// Sets default values for this character's properties
 	ATurnBasedCharacterBase();
 
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Abilities")
+	UAbilitySystemComponent* AbilitySystemComponent;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Abilities")
+	TArray<TSubclassOf<class UGameplayAbility>> PreLoadedAbilities;
 
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Abilities")
+	TObjectPtr<UAttributeSet_CharacterBase> AttributeSet;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "Collision")
+	TObjectPtr<USphereComponent> PunchSphere;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Widget")
 	TObjectPtr<UWidgetComponent> HealthBar;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Navigation")
+	TObjectPtr<UNavModifierComponent> NavModifierComponent;
 
 	UPROPERTY(BlueprintAssignable, Category = "GAS|Attribute")
 	FOnAttributeChangedSignature OnHealthChanged;
 	UPROPERTY(BlueprintAssignable, Category = "GAS|Attribute")
-	FOnAttributeChangedSignature OnMaxHealthChanged;
+	FOnAttributeChangedSignature OnAttackPowerChanged;
+	UPROPERTY(BlueprintAssignable, Category = "GAS|Attribute")
+	FOnAttributeChangedSignature OnMoveRangeChanged;
+	
 
 protected:
 	// Called when the game starts or when spawned
@@ -34,28 +59,12 @@ protected:
 
 public:
 	//Begin GETTER & SETTER
+
+	FORCEINLINE TObjectPtr<UNavModifierComponent> GetNavModifierComponent() const { return NavModifierComponent; }
 	FORCEINLINE bool IsActionable() const { return bActionable; }
 	FORCEINLINE void SetActionable(const bool InbActionable)
 	{
 		this->bActionable = InbActionable;
-	}
-
-	FORCEINLINE float GetMaxDistancePerTurn() const { return MaxDistancePerTurn; }
-	FORCEINLINE void SetMaxDistancePerTurn(const float InMaxDistancePerTurn)
-	{
-		this->MaxDistancePerTurn = InMaxDistancePerTurn;
-	}
-
-	FORCEINLINE int GetMoveCount() const { return MoveCount; }
-	FORCEINLINE void SetMoveCount(const int InMoveCount)
-	{
-		this->MoveCount = InMoveCount;
-	}
-
-	FORCEINLINE int GetAttackCount() const { return AttackCount; }
-	FORCEINLINE void SetAttackCount(const int InAttackCount)
-	{
-		this->AttackCount = InAttackCount;
 	}
 
 	//End GETTER & SETTER
@@ -66,20 +75,34 @@ public:
 
 	virtual void OnSelected(APlayerController* PlayerController);
 	virtual void OnUnSelected(APlayerController* PlayerController);
+	
 	virtual void StandBy();
-	virtual void Attack(ATurnBasedCharacterBase* Target);
+	UFUNCTION(BlueprintNativeEvent,BlueprintCallable, Category="Abilities")
+	void Attack(ATurnBasedCharacterBase* Target);
+	virtual void Attack_Implementation(ATurnBasedCharacterBase* Target);
 	virtual void OnAttacked(ATurnBasedCharacterBase* Attacker);
 	virtual void ResetTurnRelatedState();
+	UFUNCTION(BlueprintCallable)
+	void BeginMoving();
+	UFUNCTION(BlueprintCallable)
 
+	void BroadCastDefaultAttributes();
+	// void BindAttributeSetToUI();
+	// void UnBindAttributeSetToUI();
 private:
-	float Health = 100.0f;
-	float MaxHealth = 100.0f;
+	UFUNCTION()
+	void  UpdateHealthBar(float NewHealth, float MaxHealth);
+
+	void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
+	void OnAttackPowerAttributeChanged(const FOnAttributeChangeData& Data);
+	void OnMoveRangeAttributeChanged(const FOnAttributeChangeData& Data);
+	
+private:
+
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Widget", meta=(AllowPrivateAccess="true"))
 	TSubclassOf<UTurnBasedCharacterHealthBar> HealthBarClass;
-
-	float Speed;
-	float MaxDistancePerTurn = 500.0f;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="TurnRelatedState", meta=(AllowPrivateAccess="true"))
 	bool bActionable = true;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="TurnRelatedState", meta=(AllowPrivateAccess="true"))

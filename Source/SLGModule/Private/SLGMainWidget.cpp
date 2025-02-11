@@ -3,8 +3,10 @@
 
 #include "SLGMainWidget.h"
 
+#include "CharacterActionContentWidget.h"
 #include "TurnBasedGameMode.h"
 #include "Components/Button.h"
+#include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -27,18 +29,7 @@ void USLGMainWidget::OnEndTurnButtonClicked()
 	if (ATurnBasedGameMode* TurnBasedGameMode = Cast<ATurnBasedGameMode>(UGameplayStatics::GetGameMode(this)))
 	{
 		UE_LOG(LogTemp, Log, TEXT("End Turn Button Clicked"));
-		switch (TurnBasedGameMode->GetCurrentTurn().TurnType)
-		{
-		case ETurnType::PlayerTurn:
-			TurnBasedGameMode->ForwardTurn(ETurnType::EnemyTurn);
-			break;
-		case ETurnType::EnemyTurn:
-			TurnBasedGameMode->ForwardTurn(ETurnType::PlayerTurn);
-			break;
-		default:
-			checkNoEntry();
-		}
-		
+		TurnBasedGameMode->ForwardTurn(ETurnType::EnemyTurn);
 	}
 }
 
@@ -48,4 +39,18 @@ void USLGMainWidget::UpdateTurns(const FTurn& NextTurn)
 	FText TurnText = FText::FromString(FString::FromInt(TurnIndex));
 	Turns->SetText(TurnText);
 	FString TurnType = NextTurn.TurnType == ETurnType::PlayerTurn ? "Player" : "Enemy";
+
+	switch (NextTurn.TurnType)
+	{
+	case ETurnType::PlayerTurn:
+		CharacterActions->ActionsList->SetVisibility(ESlateVisibility::Visible);
+		EndTurn->SetVisibility(ESlateVisibility::Visible);
+		break;
+	case ETurnType::EnemyTurn:
+		EndTurn->SetVisibility(ESlateVisibility::Hidden);
+		break;
+	default: checkNoEntry();
+	}
+
+	TurnDescription->SetText(FText::FromString(TurnType + " Turn"));
 }

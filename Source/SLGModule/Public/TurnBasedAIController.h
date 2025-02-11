@@ -22,6 +22,10 @@ protected:
 	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
 
 public:
+	UFUNCTION(BlueprintCallable, Category = "AI",DisplayName="Can Move To Target")
+	bool CanMoveToTarget(FVector TargetLocation, float MaxDistanceLimit, float& OutLength) const;
+
+	
 	FPathFollowingRequestResult MoveToActorWithMaxDistanceLimits(const ::AActor* Goal,
 	                                                             FNavPathSharedPtr& Path,
 	                                                             float MaxDistanceLimit, float AcceptanceRadius = 20.0f
@@ -34,13 +38,11 @@ public:
 	);
 
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
-	TSoftObjectPtr<UInputAction> PawnMoveAction;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
-	TSoftObjectPtr<UInputAction> AttackAction;
+
+	UFUNCTION(BlueprintCallable)
 	void MovetoCursor();
 	void AttackPawnUnderCursor();
-
+	
 private:
 	bool IsCurrentPawnSelected(const ATurnBasedPlayerController* PlayerController) const;
 

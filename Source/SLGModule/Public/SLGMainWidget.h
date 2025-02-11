@@ -19,13 +19,15 @@ class SLGMODULE_API USLGMainWidget : public UCommonActivatableWidget
 	GENERATED_BODY()
 
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta=(BindWidget, AllowPrivateAccess="true"))
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta=(BindWidgetOptional, AllowPrivateAccess="true"))
 	TObjectPtr<UCharacterActionContentWidget> CharacterActions;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta=(BindWidget, AllowPrivateAccess="true"))
 	TObjectPtr<UButton> EndTurn;
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta=(BindWidget, AllowPrivateAccess="true"))
 	TObjectPtr<UTextBlock> Turns;
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta=(BindWidget, AllowPrivateAccess="true"))
+	TObjectPtr<UTextBlock> TurnDescription;
 	UFUNCTION()
 	void OnEndTurnButtonClicked();
 	virtual void NativeOnInitialized() override;

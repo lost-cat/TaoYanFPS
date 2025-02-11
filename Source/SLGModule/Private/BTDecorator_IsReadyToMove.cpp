@@ -1,6 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-
+﻿
 #include "BTDecorator_IsReadyToMove.h"
 
 #include "TurnBasedGameMode.h"
@@ -19,14 +17,18 @@ bool UBTDecorator_IsReadyToAction::CalculateRawConditionValue(UBehaviorTreeCompo
 {
 	if (ATurnBasedGameMode* GameMode = GetWorld()->GetAuthGameMode<ATurnBasedGameMode>(); ensure(GameMode))
 	{
+
+		ATurnBasedCharacterBase* FocusedEnemy = GameMode->GetNextFocusedEnemy();
+		if (FocusedEnemy == nullptr)
+		{
+			return false;
+		}
 		const ETurnType Turn = GameMode->GetCurrentTurn().TurnType;
-		// Turn == TargetTurnType;
 		UBlackboardComponent* BlackboardComponent = OwnerComp.GetBlackboardComponent();
 		ensure(BlackboardComponent);
 		auto SelfActor = Cast<ATurnBasedCharacterBase>(BlackboardComponent->GetValueAsObject("SelfActor"));
 		check(SelfActor)
-		return SelfActor->IsActionable() && Turn == TargetTurnType;
-		
+		return SelfActor->IsActionable() && Turn == TargetTurnType && FocusedEnemy == SelfActor;
 	}
 	return false;
 }

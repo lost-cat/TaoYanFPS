@@ -3,14 +3,20 @@
 
 #include "TurnBasedAIController.h"
 
+#include "AbilitySystemComponent.h"
+#include "AttributeSet_CharacterBase.h"
 #include "CharacterActionContentWidget.h"
 #include "EnhancedInputComponent.h"
 #include "NavigationSystem.h"
+#include "NavModifierComponent.h"
 #include "TurnBasedCharacterBase.h"
 #include "TurnBasedCharactor.h"
 #include "TurnBasedEnemy.h"
 #include "TurnBasedPlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "NavAreas/NavArea_Default.h"
+#include "NavAreas/NavArea_Null.h"
+#include "NavAreas/NavArea_Obstacle.h"
 #include "Navigation/PathFollowingComponent.h"
 
 
@@ -19,16 +25,16 @@ void ATurnBasedAIController::BeginPlay()
 	Super::BeginPlay();
 
 
-	// bind pawn control related input action  to the AI controller, it may can be down in the Charactor, but i just put it here
-	TurnBasedPlayerController = Cast<ATurnBasedPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
-	if (TurnBasedPlayerController)
-	{
-		const auto EnhancedInputComponent = Cast<UEnhancedInputComponent>(TurnBasedPlayerController->InputComponent);
-		EnhancedInputComponent->BindAction(PawnMoveAction.LoadSynchronous(), ETriggerEvent::Completed, this,
-		                                   &ATurnBasedAIController::MovetoCursor);
-		EnhancedInputComponent->BindAction(AttackAction.LoadSynchronous(), ETriggerEvent::Completed, this,
-		                                   &ATurnBasedAIController::AttackPawnUnderCursor);
-	}
+	// // bind pawn control related input action  to the AI controller, it may can be down in the Charactor, but i just put it here
+	// TurnBasedPlayerController = Cast<ATurnBasedPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
+	// if (TurnBasedPlayerController)
+	// {
+	// 	const auto EnhancedInputComponent = Cast<UEnhancedInputComponent>(TurnBasedPlayerController->InputComponent);
+	// 	EnhancedInputComponent->BindAction(PawnMoveAction.LoadSynchronous(), ETriggerEvent::Completed, this,
+	// 	                                   &ATurnBasedAIController::MovetoCursor);
+	// 	EnhancedInputComponent->BindAction(AttackAction.LoadSynchronous(), ETriggerEvent::Completed, this,
+	// 	                                   &ATurnBasedAIController::AttackPawnUnderCursor);
+	// }
 }
 
 void ATurnBasedAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
@@ -41,6 +47,7 @@ void ATurnBasedAIController::OnMoveCompleted(FAIRequestID RequestID, const FPath
 	if (Pawn_)
 	{
 		Pawn_->OnMoveCompleted.Broadcast(RequestID, Result.Code);
+		Pawn_->HidePathIndicator();
 	}
 
 	//  this is for move and attack function, if current stored request id is the same as the request id, and the result is success, then attack the target
@@ -59,6 +66,38 @@ void ATurnBasedAIController::OnMoveCompleted(FAIRequestID RequestID, const FPath
 		AttackMoveRequestID = FAIRequestID::InvalidRequest;
 		ActorToAttack = nullptr;
 	}
+}
+
+bool ATurnBasedAIController::CanMoveToTarget(FVector TargetLocation, float MaxDistanceLimit, float& OutLength) const
+{
+	FAIMoveRequest MoveReq{TargetLocation};
+	MoveReq.SetUsePathfinding(true)
+	       .SetAllowPartialPath(true)
+	       .SetNavigationFilter(DefaultNavigationFilterClass)
+	       .SetAcceptanceRadius(30.f).SetReachTestIncludesAgentRadius(true)
+	       .SetCanStrafe(true).SetProjectGoalLocation(true);
+
+	FPathFindingQuery PFQuery;
+	bool bQuery = BuildPathfindingQuery(MoveReq, PFQuery);
+	if (!bQuery)
+	{
+		return false; // can't find the navi data.
+	}
+	auto NavV1 = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+	const FPathFindingResult FindingResult = NavV1->FindPathSync(PFQuery);
+	if (FindingResult.Result != ENavigationQueryResult::Type::Success)
+	{
+		return false; // can not find path
+	}
+	if (OutLength = FindingResult.Path->GetLength(); OutLength > MaxDistanceLimit)
+	{
+		UE_LOG(LogTemp, Warning,
+		       TEXT(
+			       "Can not move to target with distance limits current cost distance is %f,but the max distance limit is %f"
+		       ), OutLength, MaxDistanceLimit);
+		return false;
+	}
+	return true;
 }
 
 /**
@@ -157,7 +196,6 @@ void ATurnBasedAIController::MovetoCursor()
 	{
 		return;
 	}
-
 	if (FVector CursorLocation; TurnBasedPlayerController->GetCursorLocation(CursorLocation))
 	{
 		if (GetPathFollowingComponent()->GetStatus() != EPathFollowingStatus::Idle)
@@ -165,20 +203,19 @@ void ATurnBasedAIController::MovetoCursor()
 			UE_LOG(LogPathFollowing, Warning, TEXT("Pawn %s is Moving"), *Pawn_->GetName());
 			return;
 		}
-
+		// Pawn_->GetNavModifierComponent()->SetAreaClass(UNavArea_Default::StaticClass());
 		FNavPathSharedPtr Path = MakeShared<FNavigationPath>();
 		const auto RequestResult = MoveToLocationWithMaxDistanceLimits(CursorLocation, Path,
-		                                                               Pawn_->GetMaxDistancePerTurn());
-
-
+		                                                               Pawn_->AbilitySystemComponent->
+		                                                                      GetNumericAttribute(
+			                                                                      UAttributeSet_CharacterBase::GetMoveDistanceAttribute()));
 		// post process for move request
 		ATurnBasedCharactor* TurnBasedCharactor = Cast<ATurnBasedCharactor>(Pawn_);
 		if (TurnBasedCharactor && RequestResult == EPathFollowingRequestResult::RequestSuccessful)
 		// if move request success, and we are moving the player's character then remove the input mapping context and hide the path indicator
 		{
-			TurnBasedPlayerController->RemoveInputMapping(TurnBasedPlayerController->PawnOperationInputMappingContext);
-			TurnBasedCharactor->HideNiagaraPath();
-			GetPawn<ATurnBasedCharactor>()->SetMoveCount(GetPawn<ATurnBasedCharactor>()->GetMoveCount() - 1);
+			TurnBasedPlayerController->RemoveInputMapping(TurnBasedPlayerController->TargetingInputMappingContext);
+			TurnBasedCharactor->HidePathIndicator();
 		}
 		else
 		{
@@ -194,9 +231,7 @@ void ATurnBasedAIController::AttackPawnUnderCursor()
 	check(Pawn_);
 
 	if (!IsCurrentPawnSelected(TurnBasedPlayerController))
-	// the pawn this AI controller controls is not selected by player
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Pawn is not selected"));
 		return;
 	}
 	if (!Pawn_->CanAttack())
@@ -204,8 +239,8 @@ void ATurnBasedAIController::AttackPawnUnderCursor()
 		return;
 	}
 	const auto HoverActor = TurnBasedPlayerController->GetHoverActor();
-	check(HoverActor);
-	if (!HoverActor->IsA<ATurnBasedEnemy>()) // no target actor  under cursor or not enemy
+
+	if (HoverActor == nullptr || !HoverActor->IsA<ATurnBasedEnemy>()) // no target actor  under cursor or not enemy
 	{
 		return;
 	}
@@ -213,7 +248,8 @@ void ATurnBasedAIController::AttackPawnUnderCursor()
 
 	FNavPathSharedPtr Path = MakeShared<FNavigationPath>();
 	const FPathFollowingRequestResult Result = MoveToActorWithMaxDistanceLimits(HoverActor, Path,
-		Pawn_->GetMaxDistancePerTurn());
+		Pawn_->AbilitySystemComponent->
+		       GetNumericAttribute(UAttributeSet_CharacterBase::GetMoveDistanceAttribute()));
 
 
 	if (Result.Code == EPathFollowingRequestResult::Failed)
@@ -222,8 +258,8 @@ void ATurnBasedAIController::AttackPawnUnderCursor()
 	}
 
 
-	Pawn_->HideNiagaraPath();
-	TurnBasedPlayerController->RemoveInputMapping(TurnBasedPlayerController->PawnOperationInputMappingContext);
+	Pawn_->HidePathIndicator();
+	TurnBasedPlayerController->RemoveInputMapping(TurnBasedPlayerController->TargetingInputMappingContext);
 	if (Result.Code == EPathFollowingRequestResult::AlreadyAtGoal)
 	{
 		//Directly attack
@@ -236,9 +272,6 @@ void ATurnBasedAIController::AttackPawnUnderCursor()
 		{
 			return;
 		}
-
-
-		GetPawn<ATurnBasedCharactor>()->SetMoveCount(GetPawn<ATurnBasedCharactor>()->GetMoveCount() - 1);
 		UE_LOG(LogTemp, Log, TEXT("Move to attack"));
 		//Attack after move to the target
 		AttackMoveRequestID = Result.MoveId;
