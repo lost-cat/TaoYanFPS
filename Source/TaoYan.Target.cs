@@ -16,6 +16,6 @@ public class TaoYanTarget : TargetRules
 
 	private void RegisterModulesCreatedByRider()
 	{
-		ExtraModuleNames.AddRange(new string[] { "SLGModule" });
+		ExtraModuleNames.AddRange(new string[] { "SLGModule", "GASLearn" });
 	}
 }

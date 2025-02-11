@@ -28,6 +28,7 @@ class SLGMODULE_API ATurnBasedPlayerController : public APlayerController
 	ATurnBasedPlayerController();
 
 public:
+	UFUNCTION(BlueprintCallable)
 	APawn* GetSelectedPawn() const;
 	AActor* GetHoverActor() const;
 	void SetSelectedPawn(ATurnBasedCharactor* Charactor);
@@ -47,6 +48,8 @@ protected:
 	virtual void BeginPlay() override;
 	void UnSelect();
 	void SelectPawn(const FInputActionValue& InputActionValue);
+	void OnTargetingCompleted(const FInputActionValue& InputActionValue);
+	void CancelTargeting();
 	virtual void SetupInputComponent() override;
 
 private:
@@ -68,10 +71,15 @@ public:
 
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category=GamePlay)
-	TSoftObjectPtr<UInputMappingContext> PawnOperationInputMappingContext;
+	TSoftObjectPtr<UInputMappingContext> TargetingInputMappingContext;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category=GamePlay)
 	TSoftObjectPtr<UInputAction> SelectPawnAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TSoftObjectPtr<UInputAction> TargetingAction;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TSoftObjectPtr<UInputAction> CancelTargetingAction;
 
 private:
 	TObjectPtr<ATurnBasedCharacterBase> SelectedPawn;

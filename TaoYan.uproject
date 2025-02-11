@@ -22,8 +22,14 @@
 			"AdditionalDependencies": [
 				"Engine",
 				"AIModule",
-				"CommonUI"
+				"CommonUI",
+				"GameplayAbilities"
 			]
+		},
+		{
+			"Name": "GASLearn",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [
@@ -36,6 +42,14 @@
 		},
 		{
 			"Name": "CommonUI",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayAbilities",
+			"Enabled": true
+		},
+		{
+			"Name": "TargetingSystem",
 			"Enabled": true
 		}
 	]

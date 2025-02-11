@@ -34,20 +34,18 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void ShowMovementRange();
-	UFUNCTION()
-	void ShowOperationContents();
 
 
+
 	UFUNCTION()
-	void MoveToLocation(const FVector& TargetLocation);
-	virtual void Attack(ATurnBasedCharacterBase* Target) override;
+	virtual void Attack_Implementation(ATurnBasedCharacterBase* Target) override;
 
 	virtual void OnSelected(APlayerController* PlayerController) override;
 	virtual void OnUnSelected(APlayerController* PlayerController) override;
 	virtual void StandBy() override;
 	virtual void ResetTurnRelatedState() override;
-	void ShowNiagaraPath();
-	void HideNiagaraPath();
+	void ShowPathIndicator();
+	void HidePathIndicator();
 
 private:
 	void UpdatePathIndicator();

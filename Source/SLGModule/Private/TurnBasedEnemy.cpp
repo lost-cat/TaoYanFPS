@@ -15,9 +15,9 @@ void ATurnBasedEnemy::OnUnSelected(APlayerController* PlayerController)
 	Super::OnUnSelected(PlayerController);
 }
 
-void ATurnBasedEnemy::Attack(ATurnBasedCharacterBase* Target)
+void ATurnBasedEnemy::Attack_Implementation(ATurnBasedCharacterBase* Target)
 {
-	Super::Attack(Target);
+	Super::Attack_Implementation(Target);
 }
 
 void ATurnBasedEnemy::OnAttacked(ATurnBasedCharacterBase* Attacker)
@@ -44,6 +44,10 @@ bool ATurnBasedEnemy::FindSuitableTarget()
 	// find the nearest player controlled pawn and set it as target
 	for (ATurnBasedCharacterBase* PlayerControlledPawn : GameMode->GetPlayerControlledPawns())
 	{
+		if (PlayerControlledPawn == nullptr)
+		{
+			continue;
+		}
 		FVector Location = PlayerControlledPawn->GetActorLocation();
 		if (auto Distance = FVector::Dist(Location, GetActorLocation()); Distance < MinDistance)
 		{

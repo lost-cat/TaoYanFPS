@@ -3,6 +3,7 @@
 
 #include "TurnBasedPlayerController.h"
 
+#include "AbilitySystemComponent.h"
 #include "CharacterActionContentWidget.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -23,21 +24,15 @@ void ATurnBasedPlayerController::BeginPlay()
 
 	MainWidget = Cast<USLGMainWidget>(
 		CreateWidget(this, UIMainClass.LoadSynchronous(), TEXT("MainWidget")));
-	if (!MainWidget)
-	{
-		return;
-	}
+	check(MainWidget)
 	MainWidget->AddToViewport();
 	CharacterActionContentWidget = MainWidget->GetCharacterActionsWidget();
-	if (CharacterActionContentWidget)
-	{
-		// CharacterActionContentWidget->AddToViewport();
-		CharacterActionContentWidget->SetVisibility(ESlateVisibility::Hidden);
-	}
+	check(CharacterActionContentWidget)
+	CharacterActionContentWidget->SetVisibility(ESlateVisibility::Hidden);
 	OnSelectedDelegate.AddUniqueDynamic(CharacterActionContentWidget,
-	                                    &UCharacterActionContentWidget::SetCorrespondCharacter);
+	                                    &UCharacterActionContentWidget::OnCharacterSelected);
 	OnUnSelectedDelegate.AddUniqueDynamic(CharacterActionContentWidget,
-	                                      &UCharacterActionContentWidget::OnPlayerUnSelected);
+	                                      &UCharacterActionContentWidget::OnCharacterUnSelected);
 }
 
 ATurnBasedPlayerController::ATurnBasedPlayerController()
@@ -87,8 +82,6 @@ bool ATurnBasedPlayerController::GetCursorLocation(FVector& OutLocation) const
 }
 
 
-
-
 void ATurnBasedPlayerController::SelectPawn(const FInputActionValue& InputActionValue)
 {
 	FHitResult HitResult;
@@ -115,6 +108,28 @@ void ATurnBasedPlayerController::SelectPawn(const FInputActionValue& InputAction
 	}
 }
 
+void ATurnBasedPlayerController::OnTargetingCompleted(const FInputActionValue& InputActionValue)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Targeting Completed"));
+	if (IsValid(SelectedPawn))
+	{
+		SelectedPawn->AbilitySystemComponent->TargetConfirm();
+		
+	}
+	RemoveInputMapping(TargetingInputMappingContext);
+}
+
+void ATurnBasedPlayerController::CancelTargeting()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Targeting Cancel"));
+
+	if (IsValid(SelectedPawn))
+	{
+		SelectedPawn->AbilitySystemComponent->TargetCancel();
+	}
+	RemoveInputMapping(TargetingInputMappingContext);
+}
+
 void ATurnBasedPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -123,6 +138,11 @@ void ATurnBasedPlayerController::SetupInputComponent()
 		UE_LOG(LogTemp, Warning, TEXT("Bind Select Pawn Action"));
 		EnhancedInputComponent->BindAction(SelectPawnAction.LoadSynchronous(), ETriggerEvent::Completed, this,
 		                                   &ATurnBasedPlayerController::SelectPawn);
+
+		EnhancedInputComponent->BindAction(TargetingAction.LoadSynchronous(), ETriggerEvent::Completed, this,
+		                                   &ATurnBasedPlayerController::OnTargetingCompleted);
+		EnhancedInputComponent->BindAction(CancelTargetingAction.LoadSynchronous(), ETriggerEvent::Completed, this,
+		                                   &ATurnBasedPlayerController::CancelTargeting);
 	}
 }
 
@@ -162,4 +182,3 @@ void ATurnBasedPlayerController::OnTurnForwarded(const FTurn& NextTurn)
 		DisableInput(this);
 	}
 }
-

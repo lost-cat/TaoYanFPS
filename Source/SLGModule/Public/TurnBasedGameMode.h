@@ -11,6 +11,7 @@
  * 
  */
 
+class ATurnBasedEnemy;
 class ATurnBasedCharacterBase;
 
 UENUM()
@@ -43,13 +44,14 @@ class SLGMODULE_API ATurnBasedGameMode : public AGameModeBase
 public:
 	FTurn GetCurrentTurn() const;
 
-	void ForwardTurn(ETurnType NextTurnType);
+	void ForwardTurn(ETurnType NextTurnType = ETurnType::PlayerTurn);
 
 	ATurnBasedCharacterBase* SpawnCharacterAtLocation(const TSubclassOf<ATurnBasedCharacterBase>& CharacterClass,
 	                                                  const FVector& Location);
 
 	FORCEINLINE TArray<ATurnBasedCharacterBase*> GetPlayerControlledPawns() const { return ControlledPawns; }
 	FOnTurnChanged OnTurnForwarded;
+	ATurnBasedCharacterBase* GetNextFocusedEnemy();
 
 protected:
 	virtual void BeginPlay() override;

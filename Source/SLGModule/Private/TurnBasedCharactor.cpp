@@ -43,101 +43,10 @@ void ATurnBasedCharactor::ShowMovementRange()
 {
 }
 
-void ATurnBasedCharactor::ShowOperationContents()
+
+void ATurnBasedCharactor::Attack_Implementation(ATurnBasedCharacterBase* Target)
 {
-	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
-	FHitResult HitResult;
-	PlayerController->GetHitResultUnderCursor(ECC_Visibility, true, HitResult);
-	if (HitResult.bBlockingHit)
-	{
-		UE_LOG(LogTemp, Display, TEXT("ATurnBasedCharactor::ShowOperationContents"));
-		if (HitResult.GetActor()->IsA<ATurnBasedEnemy>())
-		{
-			ATurnBasedEnemy* Enemy = Cast<ATurnBasedEnemy>(HitResult.GetActor());
-			// MoveToActorAndAttack(Enemy);
-		}
-	}
-	if (auto AIController = GetController<ATurnBasedAIController>())
-	{
-		if (AIController->GetMoveStatus() != EPathFollowingStatus::Idle)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ATurnBasedCharactor::MoveTo AIController is Moving"));
-			return;
-		}
-
-
-		if (PlayerController)
-		{
-			PlayerController->GetHitResultUnderCursor(ECC_Visibility, true, HitResult);
-			if (HitResult.bBlockingHit)
-			{
-				UE_LOG(LogPathFollowing, Warning, TEXT("ATurnBasedCharactor::MoveTo HitResult"));
-				const auto TargetLocation = HitResult.Location;
-				// UAIBlueprintHelperLibrary::SimpleMoveToLocation(AIController, TargetLocation);
-				AIController->MoveToLocation(TargetLocation, 10.0f, true, true, true);
-			}
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("ATurnBasedCharactor::MoveTo AIController is nullptr"));
-	}
-}
-
-
-// void ATurnBasedCharactor::MoveToActorAndAttack(const AActor* TargetActor)
-// {
-// 	const auto TurnBasedAIController = GetController<ATurnBasedAIController>();
-// 	if (TurnBasedAIController == nullptr)
-// 	{
-// 		return;
-// 	}
-// 	FAIRequestID FaiRequestID = TurnBasedAIController->MoveToActorIfIdle(
-// 		TargetActor, 20.0f, true, true, true, nullptr, true);
-// 	if (FaiRequestID == FAIRequestID::InvalidRequest)
-// 	{
-// 		return;
-// 	}
-// 	AttackDelegateHandle = TurnBasedAIController->GetPathFollowingComponent()->OnRequestFinished.AddUFunction(
-// 		this, "Attack", Cast<ATurnBasedCharacterBase>(TargetActor));
-// }
-
-void ATurnBasedCharactor::MoveToLocation(const FVector& TargetLocation)
-{
-	if (const auto AIController = GetController<ATurnBasedAIController>())
-	{
-		if (AIController->GetMoveStatus() != EPathFollowingStatus::Idle)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ATurnBasedCharactor::MoveTo AIController is Moving"));
-			return;
-		}
-		AIController->MoveToLocation(TargetLocation, 20.0f, true, true, true);
-	}
-}
-
-// void ATurnBasedCharactor::MoveToCursor()
-// {
-// 	UE_LOG(LogTemp, Display, TEXT("MoveToCursor"));
-// 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
-// 	if (const auto TurnBasedPlayerController = Cast<ATurnBasedPlayerController>(PlayerController))
-// 	{
-// 		if (const auto HoverActor = TurnBasedPlayerController->GetHoverActor(); HoverActor && HoverActor->IsA<
-// 			ATurnBasedCharacterBase>())
-// 		{
-// 			//  if the cursor location is near the character, then do not move
-// 			return;
-// 		}
-//
-// 		if (FVector CursorLocation; TurnBasedPlayerController->GetCursorLocation(CursorLocation))
-// 		{
-// 			MoveToLocation(CursorLocation);
-// 		}
-// 	}
-// }
-
-void ATurnBasedCharactor::Attack(ATurnBasedCharacterBase* Target)
-{
-	Super::Attack(Target);
+	Super::Attack_Implementation(Target);
 	UE_LOG(LogTemp, Display, TEXT("Attack %s"), *Target->GetName());
 }
 
@@ -149,10 +58,10 @@ void ATurnBasedCharactor::OnSelected(APlayerController* PlayerController)
 
 	if (const ATurnBasedPlayerController* TurnBasedPlayerController = Cast<ATurnBasedPlayerController>(PlayerController))
 	{
+		ATurnBasedAIController* AIController = Cast<ATurnBasedAIController>(Controller);
 		OnMoveCompleted.AddUniqueDynamic(TurnBasedPlayerController->GetCharacterActionContentWidget(),
 									  &UCharacterActionContentWidget::OnCorrespondCharacterMoveCompleted);
 	}
-	
 }
 
 void ATurnBasedCharactor::OnUnSelected(APlayerController* PlayerController)
@@ -200,7 +109,7 @@ void ATurnBasedCharactor::UpdatePathIndicator()
 	// PathIndicatorComponent->
 }
 
-void ATurnBasedCharactor::ShowNiagaraPath()
+void ATurnBasedCharactor::ShowPathIndicator()
 {
 	if (PathIndicatorComponent != nullptr) // first time init path indicator
 	{
@@ -222,7 +131,7 @@ void ATurnBasedCharactor::ShowNiagaraPath()
 	}
 }
 
-void ATurnBasedCharactor::HideNiagaraPath()
+void ATurnBasedCharactor::HidePathIndicator()
 {
 	if (PathIndicatorComponent)
 	{

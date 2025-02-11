@@ -9,6 +9,7 @@
 #include "TurnBasedCharacterBase.h"
 #include "CharacterActionContentWidget.generated.h"
 
+class UTextBlock;
 class USizeBox;
 class UButton;
 /**
@@ -34,22 +35,42 @@ public:
 	TObjectPtr<UButton> OpenItem;
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta=(BindWidget))
 	TObjectPtr<USizeBox> ActionsList;
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta=(BindWidget))
+	TObjectPtr<UTextBlock> CharacHP;
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta=(BindWidget))
+	TObjectPtr<UTextBlock> AttackPower;
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta=(BindWidget))
+	TObjectPtr<UTextBlock> CharacMoveRange;
 
 public:
+	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite)
+	TSubclassOf<UGameplayAbility> MoveAbility;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite)
+	TSubclassOf<UGameplayAbility> AttackAbility;
+	
 	UFUNCTION()
 	void OnCorrespondCharacterMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result);
 	UFUNCTION()
-	void SetCorrespondCharacter(class ATurnBasedCharacterBase* InCharacter);
-	void UpdateUI();
+	void OnCharacterSelected(class ATurnBasedCharacterBase* InCharacter);
+
 	UFUNCTION()
-	void OnPlayerUnSelected(ATurnBasedCharacterBase* InCharacter);
+	void OnCharacterUnSelected(ATurnBasedCharacterBase* InCharacter);
+	void SetUIVisibility();
 private:
 	UFUNCTION()
 	void OnStandbyClicked();
 	UFUNCTION()
 	void OnMoveClicked();
+	UFUNCTION()
+	void UpdateHP(float NewHP, float OldHP);
+	UFUNCTION()
+	void UpdateAttackPower(float NewAttackPower, float OldAttackPower);
+	UFUNCTION()
+	void UpdateMoveRange(float NewMoveRange, float OldMoveRange);
 	
 
 private:
 	ATurnBasedCharacterBase* CorrespondCharacter;
 };
+
+
