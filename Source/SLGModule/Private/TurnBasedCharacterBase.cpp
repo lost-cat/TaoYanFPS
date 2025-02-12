@@ -11,7 +11,6 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
-#include "NavAreas/NavArea_Null.h"
 
 
 // Sets default values
@@ -42,10 +41,10 @@ ATurnBasedCharacterBase::ATurnBasedCharacterBase()
 
 void ATurnBasedCharacterBase::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 {
-
 	bool bFound;
-	auto MaxHealth = AbilitySystemComponent->GetGameplayAttributeValue(UAttributeSet_CharacterBase::GetMaxHealthAttribute(), bFound);
-	if (MaxHealth == 0)
+	auto MaxHealth = AbilitySystemComponent->GetGameplayAttributeValue(
+		UAttributeSet_CharacterBase::GetMaxHealthAttribute(), bFound);
+	if (MaxHealth == 0.f)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Max Health is 0"));
 	}
@@ -149,17 +148,23 @@ void ATurnBasedCharacterBase::BeginMoving()
 
 void ATurnBasedCharacterBase::BroadCastDefaultAttributes()
 {
-	OnAttackPowerChanged.Broadcast(AbilitySystemComponent->GetNumericAttribute(UAttributeSet_CharacterBase::GetFirepowerAttribute()), 0);
-	OnHealthChanged.Broadcast(AbilitySystemComponent->GetNumericAttribute(UAttributeSet_CharacterBase::GetHealthAttribute()), 0);
-	OnMoveRangeChanged.Broadcast(AbilitySystemComponent->GetNumericAttribute(UAttributeSet_CharacterBase::GetMoveDistanceAttribute()), 0);
+	OnAttackPowerChanged.Broadcast(
+		AbilitySystemComponent->GetNumericAttribute(UAttributeSet_CharacterBase::GetFirepowerAttribute()), 0);
+	OnHealthChanged.Broadcast(
+		AbilitySystemComponent->GetNumericAttribute(UAttributeSet_CharacterBase::GetHealthAttribute()),
+		0);
+	OnMoveRangeChanged.Broadcast(
+		AbilitySystemComponent->GetNumericAttribute(UAttributeSet_CharacterBase::GetMoveDistanceAttribute()), 0);
 }
 
 
-
-
-void ATurnBasedCharacterBase::UpdateHealthBar(float NewHealth, float MaxHealth)
+void ATurnBasedCharacterBase::UpdateHealthBar(float NewHealth, float OldHealth)
 {
-	ensure(MaxHealth);
+	float MaxHealth = AbilitySystemComponent->GetNumericAttribute(UAttributeSet_CharacterBase::GetMaxHealthAttribute());
+
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red,
+	                                 FString::Printf(TEXT("New Health: %f, Max Health: %f"), NewHealth, MaxHealth));
 	auto Percent = NewHealth / MaxHealth;
 	if (auto UserWidget = Cast<UTurnBasedCharacterHealthBar>(HealthBar->GetUserWidgetObject()))
 	{

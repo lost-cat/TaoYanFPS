@@ -6,7 +6,7 @@
 #include "Components/Image.h"
 #include "Components/ScaleBox.h"
 #include "Components/TextBlock.h"
-#include "TaoYan/TaoYanGameMode.h"
+#include "TaoYan/TaoYanGameState.h"
 #include "TaoYan/TaoYanPlayerState.h"
 #include "TaoYan/TP_WeaponComponent.h"
 

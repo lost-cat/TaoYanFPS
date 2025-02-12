@@ -21,7 +21,8 @@ class SLGMODULE_API UCharacterActionContentWidget : public UCommonActivatableWid
 	GENERATED_BODY()
 
 
-
+	UFUNCTION()
+	void OnAttackClicked();
 	virtual void NativeOnInitialized() override;
 
 public:

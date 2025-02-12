@@ -3,8 +3,6 @@
 
 #include "AbilitySystemComponent.h"
 #include "CharacterActionContentWidget.h"
-#include "NavigationSystem.h"
-#include "NavModifierComponent.h"
 #include "TurnBasedCharactor.h"
 #include "TurnBasedPlayerController.h"
 #include "Components/Button.h"
@@ -12,9 +10,39 @@
 #include "Components/TextBlock.h"
 
 #include "Kismet/GameplayStatics.h"
-#include "NavAreas/NavArea_Default.h"
 #include "Navigation/PathFollowingComponent.h"
 
+
+void UCharacterActionContentWidget::OnAttackClicked()
+{
+	if (IsValid(CorrespondCharacter))
+	{
+		ATurnBasedPlayerController* PlayerController = Cast<ATurnBasedPlayerController>(
+			UGameplayStatics::GetPlayerController(this, 0));
+
+		if (PlayerController == nullptr)
+		{
+			return;
+		}
+		// PlayerController->BindInputMapping(PlayerController->TargetingInputMappingContext, 1);
+		if (CorrespondCharacter->AbilitySystemComponent->TryActivateAbilityByClass(AttackAbility))
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Attack Ability Activated"));
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Attack Ability Activation Failed"));
+		}
+	}
+}
+
+void UCharacterActionContentWidget::NativeOnInitialized()
+{
+	Super::NativeOnInitialized();
+	Standby->OnClicked.AddUniqueDynamic(this, &UCharacterActionContentWidget::OnStandbyClicked);
+	Move->OnClicked.AddUniqueDynamic(this, &UCharacterActionContentWidget::OnMoveClicked);
+	Attack->OnClicked.AddUniqueDynamic(this, &UCharacterActionContentWidget::OnAttackClicked);
+}
 
 void UCharacterActionContentWidget::OnStandbyClicked()
 {
@@ -58,12 +86,7 @@ void UCharacterActionContentWidget::OnMoveClicked()
 	}
 }
 
-void UCharacterActionContentWidget::NativeOnInitialized()
-{
-	Super::NativeOnInitialized();
-	Standby->OnClicked.AddUniqueDynamic(this, &UCharacterActionContentWidget::OnStandbyClicked);
-	Move->OnClicked.AddUniqueDynamic(this, &UCharacterActionContentWidget::OnMoveClicked);
-}
+
 
 
 void UCharacterActionContentWidget::OnCorrespondCharacterMoveCompleted(FAIRequestID RequestID,

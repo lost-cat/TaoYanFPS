@@ -91,7 +91,7 @@ public:
 	// void UnBindAttributeSetToUI();
 private:
 	UFUNCTION()
-	void  UpdateHealthBar(float NewHealth, float MaxHealth);
+	void  UpdateHealthBar(float NewHealth, float OldHealth);
 
 	void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
 	void OnAttackPowerAttributeChanged(const FOnAttributeChangeData& Data);

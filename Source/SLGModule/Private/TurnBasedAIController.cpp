@@ -6,17 +6,11 @@
 #include "AbilitySystemComponent.h"
 #include "AttributeSet_CharacterBase.h"
 #include "CharacterActionContentWidget.h"
-#include "EnhancedInputComponent.h"
 #include "NavigationSystem.h"
-#include "NavModifierComponent.h"
 #include "TurnBasedCharacterBase.h"
 #include "TurnBasedCharactor.h"
 #include "TurnBasedEnemy.h"
 #include "TurnBasedPlayerController.h"
-#include "Kismet/GameplayStatics.h"
-#include "NavAreas/NavArea_Default.h"
-#include "NavAreas/NavArea_Null.h"
-#include "NavAreas/NavArea_Obstacle.h"
 #include "Navigation/PathFollowingComponent.h"
 
 

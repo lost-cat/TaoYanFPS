@@ -29,7 +29,7 @@ public:
 
 	// Max attribute
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes")
-	FGameplayAttributeData MaxHealth;
+	FGameplayAttributeData MaxHealth = 100;
 	ATTRIBUTE_ACCESSORS(UAttributeSet_CharacterBase, MaxHealth)
 
 	// Firepower attribute

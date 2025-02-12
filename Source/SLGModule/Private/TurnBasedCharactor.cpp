@@ -10,10 +10,8 @@
 #include "NiagaraDataInterfaceArrayFunctionLibrary.h"
 #include "NiagaraFunctionLibrary.h"
 #include "TurnBasedAIController.h"
-#include "TurnBasedEnemy.h"
 #include "TurnBasedPlayerController.h"
 #include "Kismet/GameplayStatics.h"
-#include "Navigation/PathFollowingComponent.h"
 
 // Sets default values
 ATurnBasedCharactor::ATurnBasedCharactor()

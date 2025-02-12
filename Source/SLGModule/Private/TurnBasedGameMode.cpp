@@ -3,10 +3,8 @@
 
 #include "TurnBasedGameMode.h"
 
-#include "NavigationSystem.h"
 #include "TurnBasedEnemy.h"
 #include "TurnBasedPlayerController.h"
-#include "AI/NavigationSystemBase.h"
 #include "Kismet/GameplayStatics.h"
 
 ATurnBasedGameMode::ATurnBasedGameMode()

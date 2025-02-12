@@ -12,7 +12,8 @@
 				"UMG",
 				"AIModule",
 				"Engine",
-				"CommonUI"
+				"CommonUI",
+				"GameplayAbilities"
 			]
 		},
 		{
