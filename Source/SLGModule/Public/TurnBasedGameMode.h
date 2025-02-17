@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "TurnBasedCharacterBase.h"
 #include "GameFramework/GameModeBase.h"
+#include "Turn/TurnManagerSubsystem.h"
 #include "TurnBasedGameMode.generated.h"
 
 /**
@@ -14,13 +15,7 @@
 class ATurnBasedEnemy;
 class ATurnBasedCharacterBase;
 
-UENUM()
-enum class ETurnType: uint8
-{
-	PlayerTurn,
-	EnemyTurn,
-	AllyTurn
-};
+
 
 
 USTRUCT()

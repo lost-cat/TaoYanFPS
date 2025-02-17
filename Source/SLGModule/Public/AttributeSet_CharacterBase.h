@@ -14,6 +14,9 @@ GAMEPLAYATTRIBUTE_VALUE_GETTER(PropertyName) \
 GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
 GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
+
+
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FAttributeEvent,AActor*,AActor*,FGameplayEffectSpec&);
 /**
  * 
  */
@@ -22,6 +25,11 @@ class SLGMODULE_API UAttributeSet_CharacterBase : public UAttributeSet
 {
 	GENERATED_BODY()
 public:
+	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
+	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
+
+
+	
 	// Health attribute
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes")
 	FGameplayAttributeData Health;

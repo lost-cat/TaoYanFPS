@@ -7,6 +7,7 @@
 #include "AbilityTask_MoveToTarget.generated.h"
 
 class UNavigationQueryFilter;
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMoveToTargetDelegate);
 /**
  * 
  */
@@ -17,9 +18,13 @@ class SLGMODULE_API UAbilityTask_MoveToTarget : public UAbilityTask
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Ability|Tasks", meta = (HidePin = "OwningAbility", DefaultToSelf = "OwningAbility", BlueprintInternalUseOnly = "TRUE"))
-	static UAbilityTask_MoveToTarget* MoveToTarget(UGameplayAbility* OwningAbility, FName TaskInstanceName, AActor* TargetActor,
+	static UAbilityTask_MoveToTarget* MoveToTarget(UGameplayAbility* OwningAbility, FName TaskInstanceName, AActor* TargetActor,const FVector& TargetLocation,
 		float AcceptanceRadius = 10.0f, bool bStopOnOverlap = false, bool bUsePathfinding = true, bool bUseAsyncPathfinding = true,
 		TSubclassOf<UNavigationQueryFilter> FilterClass = nullptr);
-	
+
+	FMoveToTargetDelegate OnMoveFinished;
+	FMoveToTargetDelegate OnMoveFailed;
 	virtual void Activate() override;
+	
+	
 };
