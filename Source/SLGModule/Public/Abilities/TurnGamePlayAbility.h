@@ -22,6 +22,8 @@ protected:
 public:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Turn")
 	TSubclassOf<UTurnAction> TurnActionClass;
+
+	
 };
 
 

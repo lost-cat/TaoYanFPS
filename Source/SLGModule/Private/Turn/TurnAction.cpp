@@ -9,7 +9,7 @@
 void UTurnAction_Move::Execute()
 {
 	Super::Execute();
-	if (IsValid(Target)) //  move to taget actor
+	if (IsValid(TargetActor)) //  move to taget actor
 	{
 	}
 	else // move to action location
@@ -34,6 +34,8 @@ void UTurnAction_Attack::Execute()
 void UTurnAction_Attack::Undo()
 {
 	Super::Undo();
+	
+	
 }
 
 // UTurnAction_Standby  //////////////////////////////////////////////////////////////

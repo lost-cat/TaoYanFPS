@@ -3,9 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AttributeSet.h"
+#include "GameplayTagContainer.h"
 #include "UObject/Object.h"
 #include "TurnAction.generated.h"
 
+struct FGameplayTagContainer;
 class UTurnAction;
 class ATurnBasedCharacterBase;
 
@@ -18,6 +21,7 @@ struct FTurnActionHandle
 	int32 Identifier;
 	UTurnAction* Action;
 };
+
 
 /**
  * 
@@ -70,6 +74,7 @@ public:
 	{
 		this->BehaviorOwner = InBehaviorOwner;
 	}
+
 	/// End Getter and Setter
 
 protected:
@@ -91,9 +96,9 @@ public:
 	FVector TargetLocation;
 	UPROPERTY(BlueprintReadWrite)
 	FVector StartLocation;
-private:
-	ATurnBasedCharacterBase* Target;
 
+private:
+	ATurnBasedCharacterBase* TargetActor;
 };
 
 UCLASS()
@@ -102,6 +107,25 @@ class UTurnAction_Attack : public UTurnAction
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(BlueprintReadWrite)
+	ATurnBasedCharacterBase* TargetActor;
+	UPROPERTY(BlueprintReadWrite)
+	TMap<FGameplayAttribute, float> AttributeBeforeActionOnTarget;
+
+	UPROPERTY(BlueprintReadWrite)
+	TMap<FGameplayAttribute, float> AttributeBeforeActionOnBehaviorOwner;
+
+
+	UPROPERTY(BlueprintReadWrite)
+	FGameplayTagContainer TagsBeforeActionOnTarget;
+	UPROPERTY(BlueprintReadWrite)
+	FGameplayTagContainer TagsBeforeActionOnBehaviorOwner;
+	// UPROPERTY(BlueprintReadWrite)
+	// FGameplayAttribute AttributeToModifyOnTarget;
+	// UPROPERTY(BlueprintReadWrite)
+	// FGameplayAttribute AttributeToModifyOnBehaviorOwner;
+
+
 	virtual void Execute() override;
 	virtual void Undo() override;
 };
